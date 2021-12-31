@@ -79,7 +79,7 @@ namespace TSP{
             Tree t (g1);
             double t_i = 1.0 / (i + 1); //may need to change this. See page 4 of the assignment
             for(int j = 0; j < lowerbound.size(); j++){
-                lowerbound[j] += g->getEdgeWeight(i, j);
+                lowerbound[j] += (g->getEdgeWeight(i, j) + t_i * (t.getDegree(j) - 2));
             }
 
         }

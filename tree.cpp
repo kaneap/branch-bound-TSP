@@ -30,17 +30,20 @@ namespace TSP {
         edges.push_back(std::make_pair(one, oneEdges[0].first));
         edges.push_back(std::make_pair(one, oneEdges[1].first));
         _edges = edges;
+        for(auto e : _edges){
+            _vertexDegrees[e.first]++;
+            _vertexDegrees[e.second]++;
+        }
     }
 
     bool Tree::is2Regular(){
-        std::vector<int> vertexDegrees;
-        for(auto e : _edges){
-            vertexDegrees[e.first]++;
-            vertexDegrees[e.second]++;
-        }
-        for(int degree : vertexDegrees){
+        for(int degree : _vertexDegrees){
             if(degree != 0) return false;
         }
         return true;
+    }
+
+    int Tree::getDegree(NodeId v){
+        return _vertexDegrees[v];
     }
 }

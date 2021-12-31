@@ -10,6 +10,8 @@ namespace TSP {
     class Tree {
     private:
         std::vector<std::pair<NodeId, NodeId>> _edges;
+        std::vector<int> vertexDegrees;
+
     public:
         Tree(const Graph & graph, NodeId one);
         ~Tree();
