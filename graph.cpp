@@ -60,5 +60,6 @@ namespace TSP {
             }
         }
         //todo: sort and save edges so we can use it again without recalculating it
+        //for now can use std::sort, but to get the runtime better, we can use radix sor
     };
 }
