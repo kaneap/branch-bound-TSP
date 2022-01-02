@@ -2,8 +2,10 @@
 #include <fstream>
 #include <string>
 #include <set>
+#include <limits>
 #include "graph.hpp"
 #include "tree.hpp"
+#include "edge.hpp"
 
 namespace TSP{
     /**
@@ -106,13 +108,16 @@ namespace TSP{
         //todo
     }
 
-    void branchAndBound(Graph* graph, NodeId start_node, NodeId end_node, int max_depth, int max_weight){
+    void branchAndBound(Graph& graph, NodeId start_node, NodeId end_node, int max_depth, int max_weight){
         //todo
-        std::vector<std::pair<std::set<NodeId>, std::set<NodeId>>> Q;
-        Q.push_back(std::make_pair(std::set<NodeId>(), std::set<NodeId>()));
+        std::vector<std::pair<std::set<Edge>, std::set<Edge>>> Q;
+        std::vector<Edge> seenEdges;
+        Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
+        int upperLimit =  std::numeric_limits<NodeId>::max(); //TODO: what should initial value be?
+        Tree shortestTour;
          
         while(Q.size() > 0){
-            std::pair<std::set<NodeId>, std::set<NodeId>> current_pair = Q.back();
+            std::pair<std::set<Edge>, std::set<Edge>> current_pair = Q.back();
             Q.pop_back();
             auto required = current_pair.first;
             auto forbidden = current_pair.second;
@@ -121,12 +126,57 @@ namespace TSP{
             // TODO: create a 1-tree from this λ
             Tree t;
             if(t.is2Regular()){
-                //update U
+                if(t.getTourLength() < upperLimit) {
+                   upperLimit = t.getTourLength();
+                   shortestTour = t;
+                }
             }
             else{
+                
                 //there needs to be a vertex 2 ≤ i ≤ n with |δ T (i)| > 2.
+                NodeId i = invalid_node_id;
+                //should looking for this vetex be randomized perhaps?
+                for(NodeId v = 0; v < graph.getNumVertices(); v++){
+                    int degree = t.getDegree(v);
+                    if (degree > 2){
+                        i = v;
+                        break;
+                    }
+                }
+                if(i == invalid_node_id) throw std::exception("No edge has degree > 2 in the tree... something is wrong...");
 
+                std::set<WeightedEdge> connectedEdges = t.getConnectedEdges(i);
+                for(WeightedEdge e : connectedEdges){
+                    if(required.count(e) != 0 ||  forbidden.count(e) != 0){
+                        connectedEdges.erase(e);
+                }
+
+                //remove R and F from connected edges
+                for (auto iter = connectedEdges.begin(), end=connectedEdges.end(); iter != end; iter++) {
+                    auto e = *iter;
+                    if(required.count(e) != 0 ||  forbidden.count(e) != 0){
+                        iter = connectedEdges.erase(iter);
+                    }
+                }
+                if (connectedEdges.size() < 2) throw std::exception("No edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
+
+                auto iter = connectedEdges.begin();
                 //add to q 3 new nodes
+                Edge e1 = *iter;
+                iter++;
+                Edge e2 = *iter;
+                auto R_e1 = required;
+                R_e1.insert(e1);
+                auto R_e1_e2 = R_e1;
+                R_e1_e2.insert(e2);
+                auto F_e1 = forbidden;
+                F_e1.insert(e1);
+                auto F_e2 = forbidden;
+                F_e2.insert(e2);
+                Q.push_back(std::make_pair(required, F_e1));
+                Q.push_back(std::make_pair(R_e1, F_e2));
+                //TODO: omit where the last node is omitted if there is already a required edge incident to i
+                Q.push_back(std::make_pair(R_e1_e2, forbidden));
             }            
 
             // if c(T, λ) ≥ U then continue
