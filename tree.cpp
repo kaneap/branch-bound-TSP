@@ -49,6 +49,43 @@ namespace TSP
         return true;
     }
 
+    std::vector<NodeId> Tree::getTour(){
+        if(!is2Regular) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
+        std::vector<std::vector<NodeId>> connections; 
+        std::vector<NodeId> tour(this->_numVertices);
+        for(auto e : _edges){
+            connections[e.a()].push_back(b);
+            connections[e.b()].push_back(a);
+        }
+        NodeId curr = 0;
+        NodeId prev = invalid_node_id;
+        do{
+            //add the current to the tour
+            tour.push_back(curr);
+            NodeId a = connections[curr][0];
+            NodeId b = connections[curr][1];
+            NodeId next = (a == prev)? b : a;
+            prev = curr;
+            curr = next;
+        }while(curr != 0);
+        
+
+    }
+
+    std::string Tree::toTsplibString(){
+        if(!is2Regular) throw std::runtime_error("Attemted to get tour string of a 1-tree which isn't 2-regular");
+
+        std::stringstream ss;
+        int numEdges = this->_edges.size();
+        ss << "TYPE : TOUR" << std::endl;
+        ss << "DIMENSION : " << numEdges << std::endl;
+        ss <<"TOUR SECTION" << std::endl;
+            ss << "e " << (pair.first+1) << " " << (pair.second + 1) << std::endl;
+        }
+        ss << "-1" << std::endl << "EOF";
+      return ss.str();
+    }
+
     int Tree::getDegree(NodeId v)
     {
         return _vertexDegrees[v];
