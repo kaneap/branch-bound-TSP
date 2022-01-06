@@ -2,8 +2,29 @@
 
 namespace TSP
 {
-    Tree::Tree(const Graph &graph, NodeId one)
+    Tree::Tree()
     {
+        _numVertices = 0;
+    }
+
+    Tree::Tree(const Graph & graph): Tree(graph, std::set<Edge>(), std::set<Edge>()){}
+    
+    Tree::Tree (const Graph &graph, std::set<Edge> required, std::set<Edge> forbidden):
+        Tree(graph, std::vector<int>(graph.getNumVertices(), 0), required, forbidden) 
+    {}
+
+    Tree::Tree(const Graph &graph, std::vector<int> lambda):
+        Tree(graph, lambda, std::set<Edge>(), std::set<Edge>())
+    {}
+
+    //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
+    Tree::Tree(const Graph & graph, std::vector<int> lambda, std::set<Edge> required, std::set<Edge> forbidden)
+    {
+        //TODO: require and forbid edges
+        //TODO: use modified weights via lambda
+
+        //TODO: does it matter what we set the 1-vertex to? Should it be random?
+        NodeId one = 0;
         //first, use Kruskal's algorithm to create a minimum spanning tree
         std::vector<WeightedEdge> edges;
         //might make sense for vertexSets to be a member of a disjoint set (union) class
@@ -34,12 +55,12 @@ namespace TSP
         _edges = edges;
         for (auto e : _edges)
         {
-            _vertexDegrees[e.first]++;
-            _vertexDegrees[e.second]++;
+            _vertexDegrees[e.a()]++;
+            _vertexDegrees[e.b()]++;
         }
     }
 
-    bool Tree::is2Regular()
+    bool Tree::is2Regular() const
     {
         for (int degree : _vertexDegrees)
         {
@@ -54,8 +75,8 @@ namespace TSP
         std::vector<std::vector<NodeId>> connections; 
         std::vector<NodeId> tour(this->_numVertices);
         for(auto e : _edges){
-            connections[e.a()].push_back(b);
-            connections[e.b()].push_back(a);
+            connections[e.a()].push_back(e.b());
+            connections[e.b()].push_back(e.a());
         }
         NodeId curr = 0;
         NodeId prev = invalid_node_id;
@@ -80,18 +101,19 @@ namespace TSP
         ss << "TYPE : TOUR" << std::endl;
         ss << "DIMENSION : " << numEdges << std::endl;
         ss <<"TOUR SECTION" << std::endl;
-            ss << "e " << (pair.first+1) << " " << (pair.second + 1) << std::endl;
+        for (auto v : this->getTour()){
+            ss << v << std::endl;
         }
         ss << "-1" << std::endl << "EOF";
       return ss.str();
     }
 
-    int Tree::getDegree(NodeId v)
+    int Tree::getDegree(NodeId v) const
     {
         return _vertexDegrees[v];
     }
 
-    int Tree::getTourLength()
+    int Tree::getTourCost() const
     {
         if (!is2Regular()) return -1; //TODO: return exeption?? Or just invalid value?
         int sum = 0;
@@ -101,12 +123,17 @@ namespace TSP
         return sum;
     }
 
-    std::set<WeightedEdge> Tree::getConnectedEdges(NodeId v){
+    std::set<WeightedEdge> Tree::getConnectedEdges(NodeId v) {
         std::set<WeightedEdge> connected;
         for(WeightedEdge e : _edges){
             if(e.connectsVertex(v)) connected.insert(e);
         }
         //TODO: should I return reference?
         return connected;
+    }
+
+    int Tree::getNumVertices() const
+    {
+        return _numVertices;
     }
 }
