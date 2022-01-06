@@ -19,6 +19,7 @@
 #include <utility>
 #include <fstream>
 #include "nodeId.hpp"
+#include "weightedEdge.hpp"
 
 namespace TSP {
 
@@ -73,8 +74,8 @@ namespace TSP {
       size_type getNumVertices() const;
       size_type getNumEdges() const;
       // todo: this vector pair pair thing is ugly... probably should be an object...
-      std::vector<std::pair<std::pair<NodeId, NodeId>, int>> getEdges () const;
-      std::vector<std::pair<NodeId, int>> getConnectedEdgeWeights(NodeId v) const;
+      std::vector<WeightedEdge> getEdges () const;
+      std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
 
    private:
       std::vector<std::vector<int>> _edges;

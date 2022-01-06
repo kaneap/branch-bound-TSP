@@ -118,17 +118,19 @@ namespace TSP {
         return _numVertices * (_numVertices - 1) / 2;
    }
    
-    std::vector<std::pair<std::pair<NodeId, NodeId>, int>> Graph::getEdges () const {
-        std::vector<std::pair<std::pair<NodeId, NodeId>, int>> edges(getNumEdges());
+    std::vector<WeightedEdge> Graph::getEdges () const {
+        std::vector<WeightedEdge> edges(getNumEdges());
         for(NodeId i = 0; i < _numVertices; i++){
             for(NodeId j = 0; j < _numVertices; j++){
                 if (i>=j) continue; //avoid double counting edges
-                auto edge = std::make_pair(i, j);
                 int weight = getEdgeWeight(i, j);
-                edges.push_back(std::make_pair(edge, weight));
+                WeightedEdge edge (i, j, weight);
+                edges.push_back(edge);
             }
         }
-        //todo: sort and save edges so we can use it again without recalculating it
+        //todo: should we cache this?
+        //for now can use std::sort, but to get the runtime better, we can use radix sort
+        std::sort(edges.begin(), edges.end());
         return edges;
     };
 }
