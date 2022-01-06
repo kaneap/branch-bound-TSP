@@ -2,7 +2,15 @@
 #include <fstream>
 #include <string>
 #include <set>
+#include <vector>
 #include <limits>
+#include <limits>
+#include <algorithm>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <utility>
+#include "graph.hpp"
 #include "graph.hpp"
 #include "tree.hpp"
 #include "union.hpp"
@@ -11,60 +19,6 @@
 #include <numeric>
 
 namespace TSP{
-    /**
-     * @brief
-     * NOTE: I have no idea whether this is correct.
-     * @param filename
-     * @return Graph*
-     */
-    Graph* graph_from_file(std::string const & filename){
-        std::ifstream file(filename);
-        if (!file.is_open()){
-            throw std::runtime_error("Could not open file " + filename);
-        }
-        Graph * graph = nullptr;
-        while(file.is_open()){
-            std::string line;
-            std::string n, a, u, v = "";
-            while(getline(file, line)){
-                std::stringstream ss(line);
-                std::string token;
-                for(int i = 0; getline(ss, token, ' ');){
-                    if(i == 0 && token.compare("c") == 0) break;
-                    if(i == 0){
-                        a = token;
-                    } else if (i == 1) {
-                        if(a.compare("e") == 0){
-                            u = token;
-                        }
-                    } else if (i == 2) {
-                        if(a.compare("p") == 0){
-                            n = token;    
-                        }
-                        else if(a.compare("e") == 0){
-                            v = token;
-                        }
-                    }
-                    i++;
-                }
-                if(a.compare("p") == 0){
-                    if(graph != nullptr)
-                        throw new std::runtime_error("DIMACS file error: Graph defined more than once.");
-                    int vertices = std::stoi(n);
-                    graph = new Graph(vertices);
-                }
-                else if(a.compare("e") == 0){
-                    if (graph == nullptr) 
-                        throw new std::runtime_error("DIMACS file error: edges must be listed after the definition of the graph.");
-                    int v1 = std::stoi(u)-1;
-                    int v2 = std::stoi(v)-1;
-                    graph->setEdgeWeight(v1, v2, 1); //todo
-                }
-            }
-            file.close();
-        }
-        return graph;
-    }
 
     /**
      * @brief This correspond to c(T, λ) on page 1 of the assignment.
@@ -297,6 +251,6 @@ int main(int argc, char*argv[]){
         return 1;
     }
     std::string filename (argv[1]);
-    TSP::Graph* g = TSP::graph_from_file(filename);
+    TSP::Graph g(filename);
     return 0;
 }

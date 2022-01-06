@@ -17,6 +17,7 @@
 #include <stack>
 #include <stdexcept>
 #include <utility>
+#include <fstream>
 #include "nodeId.hpp"
 #include "weightedEdge.hpp"
 
@@ -47,6 +48,7 @@ namespace TSP {
          Edge weights are assigned internally as -1 initially to indicate that the edge hasn't been assigned.
       **/
       Graph (size_type const num_nodes);
+      Graph (std::string const &filename);
 
       /** @return The number of nodes in the graph. **/
       size_type num_nodes () const;
@@ -78,6 +80,7 @@ namespace TSP {
    private:
       std::vector<std::vector<int>> _edges;
       size_type _numVertices;
+      void initWeights();
    };
 }
 
