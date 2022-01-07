@@ -86,42 +86,6 @@ namespace TSP{
         return lambda;
     }
 
-    //probably don't need this
-    /*
-    int findLowerbound(Graph * g){
-        int N = g->getNumVertices(); // todo: do we need to fix the iterations N?
-        std::vector<int> lowerbound (g->getNumVertices());
-        for(int i = 0; i < N; i++){
-            //make g1 a copy of g but with the lambda added to the edge weight (as shown in class)
-            Graph g1 (g->getNumVertices());
-            for(int j = 0; j < N; j++){
-                for(int k = 0; k < N; k++){
-                    if(j != k){
-                        int w = g->getEdgeWeight(j, k) + lowerbound[j] + lowerbound[k];
-                        g1.setEdgeWeight(j, k, w);
-                    }
-                }
-            }
-            Tree t (g1);
-            double t_i = 1.0 / (i + 1); //may need to change this. See page 4 of the assignment
-            for(int j = 0; j < lowerbound.size(); j++){
-                lowerbound[j] += (g->getEdgeWeight(i, j) + t_i * (t.getDegree(j) - 2));
-            }
-
-        }
-        for(int i = 0; i < g->getNumVertices(); i++){
-            for(int j = i+1; j < g->getNumVertices(); j++){
-                int weight = g->getEdgeWeight(i, j);
-                if(weight > 0){
-                    lowerbound += weight;
-                }
-            }
-        }
-        return lowerbound;
-    }
-    */
-
-
     /**
      * @brief 
      * 
@@ -157,6 +121,40 @@ namespace TSP{
         return nextLambda;
     }
 
+    //probably don't need this
+    /*
+    int findLowerbound(Graph * g){
+        int N = g->getNumVertices(); // todo: do we need to fix the iterations N?
+        std::vector<int> lowerbound (g->getNumVertices());
+        for(int i = 0; i < N; i++){
+            //make g1 a copy of g but with the lambda added to the edge weight (as shown in class)
+            Graph g1 (g->getNumVertices());
+            for(int j = 0; j < N; j++){
+                for(int k = 0; k < N; k++){
+                    if(j != k){
+                        int w = g->getEdgeWeight(j, k) + lowerbound[j] + lowerbound[k];
+                        g1.setEdgeWeight(j, k, w);
+                    }
+                }
+            }
+            Tree t (g1);
+            double t_i = 1.0 / (i + 1); //may need to change this. See page 4 of the assignment
+            for(int j = 0; j < lowerbound.size(); j++){
+                lowerbound[j] += (g->getEdgeWeight(i, j) + t_i * (t.getDegree(j) - 2));
+            }
+
+        }
+        for(int i = 0; i < g->getNumVertices(); i++){
+            for(int j = i+1; j < g->getNumVertices(); j++){
+                int weight = g->getEdgeWeight(i, j);
+                if(weight > 0){
+                    lowerbound += weight;
+                }
+            }
+        }
+        return lowerbound;
+    }
+    */
 
     void branchAndBound(Graph& graph){
         //todo
@@ -164,7 +162,7 @@ namespace TSP{
         std::vector<Edge> seenEdges;
         std::vector<int> lambda;
         Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
-        int upperLimit =  std::numeric_limits<NodeId>::max(); //TODO: what should initial value be? See page 3 of assignment.
+        int upperLimit =  std::numeric_limits<int>::max(); //TODO: what should initial value be? See page 3 of assignment.
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
         float t_0 = -1;

@@ -73,7 +73,6 @@ namespace TSP {
       int getEdgeWeight(NodeId const node1_id, NodeId const node2_id) const;
       size_type getNumVertices() const;
       size_type getNumEdges() const;
-      // todo: this vector pair pair thing is ugly... probably should be an object...
       std::vector<WeightedEdge> getEdges () const;
       std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
 
