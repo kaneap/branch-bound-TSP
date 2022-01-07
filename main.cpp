@@ -2,7 +2,15 @@
 #include <fstream>
 #include <string>
 #include <set>
+#include <vector>
 #include <limits>
+#include <limits>
+#include <algorithm>
+#include <sstream>
+#include <stack>
+#include <stdexcept>
+#include <utility>
+#include "graph.hpp"
 #include "graph.hpp"
 #include "tree.hpp"
 #include "union.hpp"
@@ -11,60 +19,6 @@
 #include <numeric>
 
 namespace TSP{
-    /**
-     * @brief
-     * NOTE: I have no idea whether this is correct.
-     * @param filename
-     * @return Graph*
-     */
-    Graph* graph_from_file(std::string const & filename){
-        std::ifstream file(filename);
-        if (!file.is_open()){
-            throw std::runtime_error("Could not open file " + filename);
-        }
-        Graph * graph = nullptr;
-        while(file.is_open()){
-            std::string line;
-            std::string n, a, u, v = "";
-            while(getline(file, line)){
-                std::stringstream ss(line);
-                std::string token;
-                for(int i = 0; getline(ss, token, ' ');){
-                    if(i == 0 && token.compare("c") == 0) break;
-                    if(i == 0){
-                        a = token;
-                    } else if (i == 1) {
-                        if(a.compare("e") == 0){
-                            u = token;
-                        }
-                    } else if (i == 2) {
-                        if(a.compare("p") == 0){
-                            n = token;    
-                        }
-                        else if(a.compare("e") == 0){
-                            v = token;
-                        }
-                    }
-                    i++;
-                }
-                if(a.compare("p") == 0){
-                    if(graph != nullptr)
-                        throw new std::runtime_error("DIMACS file error: Graph defined more than once.");
-                    int vertices = std::stoi(n);
-                    graph = new Graph(vertices);
-                }
-                else if(a.compare("e") == 0){
-                    if (graph == nullptr) 
-                        throw new std::runtime_error("DIMACS file error: edges must be listed after the definition of the graph.");
-                    int v1 = std::stoi(u)-1;
-                    int v2 = std::stoi(v)-1;
-                    graph->setEdgeWeight(v1, v2, 1); //todo
-                }
-            }
-            file.close();
-        }
-        return graph;
-    }
 
     /**
      * @brief This correspond to c(T, λ) on page 1 of the assignment.
@@ -95,14 +49,17 @@ namespace TSP{
         float t = t_0;
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
+
+        Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(graph, lambda, required, forbidden);
+            tree = Tree(updated, required, forbidden);
             for(int v : lambda){
                 lambda = findNextLambda(tree, lambda, t);
-                //todo: also use VJ lambda
+                //todo: also use VJ lambda -> 0.4 and 0.6 in paper
             }
             t -= delta;
             delta -= deltaStep;
+            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
         }
         return lambda;
     }
@@ -120,14 +77,16 @@ namespace TSP{
         float t = tree.getTourCost() / (2.0 * n);
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
+        Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(graph, lambda);
+            tree = Tree(updated);
             for(int v : lambda){
                 lambda = findNextLambda(tree, lambda, t);
                 //todo: also use VJ lambda
             }
             t -= delta;
             delta -= deltaStep;
+            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
         }
         return lambda;
     }
@@ -257,6 +216,7 @@ namespace TSP{
                 for(WeightedEdge e : connectedEdges){
                     if(required.count(e) != 0 ||  forbidden.count(e) != 0){
                         connectedEdges.erase(e);
+                    }
                 }
 
                 //remove R and F from connected edges
@@ -284,8 +244,8 @@ namespace TSP{
                 Q.push_back(std::make_pair(required, F_e1));
                 Q.push_back(std::make_pair(R_e1, F_e2));
                 //TODO: omit where the last node is omitted if there is already a required edge incident to i
-                Q.push_back(std::make_pair(R_e1_e2, forbidden));
-            }            
+                Q.push_back(std::make_pair(R_e1_e2, forbidden));            
+            }
         }
     }
 }
@@ -297,6 +257,7 @@ int main(int argc, char*argv[]){
         return 1;
     }
     std::string filename (argv[1]);
-    TSP::Graph* g = TSP::graph_from_file(filename);
+    TSP::Graph g(filename);
     return 0;
 }
+

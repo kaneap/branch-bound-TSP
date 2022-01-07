@@ -17,6 +17,8 @@
 #include <stack>
 #include <stdexcept>
 #include <utility>
+#include <fstream>
+#include <set>
 #include "nodeId.hpp"
 #include "weightedEdge.hpp"
 
@@ -46,7 +48,9 @@ namespace TSP {
 
          Edge weights are assigned internally as -1 initially to indicate that the edge hasn't been assigned.
       **/
-      Graph (size_type const num_nodes);
+      Graph (size_type const numVertices);
+      Graph (std::string const &filename);
+      Graph (size_type const numVertices, std::vector<std::vector<int>> edges);
 
       /** @return The number of nodes in the graph. **/
       size_type num_nodes () const;
@@ -72,12 +76,15 @@ namespace TSP {
       size_type getNumVertices() const;
       size_type getNumEdges() const;
       // todo: this vector pair pair thing is ugly... probably should be an object...
-      std::vector<WeightedEdge> getEdges () const;
+      std::vector<WeightedEdge> getEdges (std::set<Edge> required, std::set<Edge> forbidden) const;
       std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
+      std::vector<std::vector<int>> updatedEdgeCosts(std::vector<int> lambda);
 
    private:
       std::vector<std::vector<int>> _edges;
       size_type _numVertices;
+      void initWeights();
+      int getPosition(NodeId a, NodeId b) const;
    };
 }
 

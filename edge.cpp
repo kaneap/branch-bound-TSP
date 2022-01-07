@@ -16,9 +16,9 @@ namespace TSP {
         return ((this->_a == other._a) && (this->_b == other._b));
     }
 
-    NodeId Edge::a(){return this->_a;}
+    const NodeId Edge::a(){return this->_a;}
 
-    NodeId Edge::b(){return this->_b;}
+    const NodeId Edge::b(){return this->_b;}
 
     NodeId Edge::getOtherVertex(NodeId other){
         if(this->a() != other && this->b() != other)
