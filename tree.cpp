@@ -8,20 +8,12 @@ namespace TSP
     }
 
     Tree::Tree(const Graph & graph): Tree(graph, std::set<Edge>(), std::set<Edge>()){}
-    
-    Tree::Tree (const Graph &graph, std::set<Edge> required, std::set<Edge> forbidden):
-        Tree(graph, std::vector<int>(graph.getNumVertices(), 0), required, forbidden) 
-    {}
-
-    Tree::Tree(const Graph &graph, std::vector<int> lambda):
-        Tree(graph, lambda, std::set<Edge>(), std::set<Edge>())
-    {}
 
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
-    Tree::Tree(const Graph & graph, std::vector<int> lambda, std::set<Edge> required, std::set<Edge> forbidden)
+    Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden)
     {
-        //TODO: require and forbid edges
-        //TODO: use modified weights via lambda
+        //DONE: require and forbid edges
+        //DONE in main: use modified weights via lambda
 
         //TODO: does it matter what we set the 1-vertex to? Should it be random?
         NodeId one = 0;
@@ -36,7 +28,7 @@ namespace TSP
                 continue; //we exclude the 1 in the 1-tree
             vertexSets[i] = Union::makeSet(i);
         }
-        auto allEdges = graph.getEdges();
+        auto allEdges = graph.getEdges(required, forbidden);
 
         for (auto e : allEdges)
         {
@@ -64,7 +56,7 @@ namespace TSP
     {
         for (int degree : _vertexDegrees)
         {
-            if (degree != 0)
+            if (degree != 2)
                 return false;
         }
         return true;
