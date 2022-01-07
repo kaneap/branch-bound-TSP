@@ -14,8 +14,8 @@ namespace TSP {
         Edge(NodeId a, NodeId b);
         ~Edge();
         bool operator== (const Edge& other);
-        NodeId a();
-        NodeId b();
+        const NodeId a();
+        const NodeId b();
         NodeId getOtherVertex(NodeId other);
         bool connectsVertex(NodeId v);
     };

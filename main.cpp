@@ -49,14 +49,17 @@ namespace TSP{
         float t = t_0;
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
+
+        Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(graph, lambda, required, forbidden);
+            tree = Tree(updated, required, forbidden);
             for(int v : lambda){
                 lambda = findNextLambda(tree, lambda, t);
-                //todo: also use VJ lambda
+                //todo: also use VJ lambda -> 0.4 and 0.6 in paper
             }
             t -= delta;
             delta -= deltaStep;
+            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
         }
         return lambda;
     }
@@ -74,14 +77,16 @@ namespace TSP{
         float t = tree.getTourCost() / (2.0 * n);
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
+        Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(graph, lambda);
+            tree = Tree(updated);
             for(int v : lambda){
                 lambda = findNextLambda(tree, lambda, t);
                 //todo: also use VJ lambda
             }
             t -= delta;
             delta -= deltaStep;
+            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
         }
         return lambda;
     }
@@ -209,6 +214,7 @@ namespace TSP{
                 for(WeightedEdge e : connectedEdges){
                     if(required.count(e) != 0 ||  forbidden.count(e) != 0){
                         connectedEdges.erase(e);
+                    }
                 }
 
                 //remove R and F from connected edges
@@ -236,8 +242,8 @@ namespace TSP{
                 Q.push_back(std::make_pair(required, F_e1));
                 Q.push_back(std::make_pair(R_e1, F_e2));
                 //TODO: omit where the last node is omitted if there is already a required edge incident to i
-                Q.push_back(std::make_pair(R_e1_e2, forbidden));
-            }            
+                Q.push_back(std::make_pair(R_e1_e2, forbidden));            
+            }
         }
     }
 }
@@ -252,3 +258,4 @@ int main(int argc, char*argv[]){
     TSP::Graph g(filename);
     return 0;
 }
+
