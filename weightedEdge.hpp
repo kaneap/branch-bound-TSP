@@ -7,7 +7,6 @@ namespace TSP {
     class WeightedEdge : public Edge{
     private:
         int _weight;
-
     public:
         WeightedEdge(NodeId a, NodeId b, int weight);
         ~WeightedEdge();

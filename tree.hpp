@@ -1,7 +1,6 @@
 #ifndef TREE_HPP
 #define TREE_HPP
 
-#include <set>
 #include <algorithm>
 #include <string>
 #include <exception>

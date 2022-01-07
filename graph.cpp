@@ -15,6 +15,11 @@ namespace TSP {
         initWeights();
     }
 
+    Graph::Graph(size_type const numVertices, std::vector<std::vector<int>> edges):
+    _numVertices(numVertices),
+    _edges(edges){}
+
+
     Graph::Graph (std::string const &filename){
         std::vector<int> xcoordinates;
         std::vector<int> ycoordinates;
@@ -111,6 +116,7 @@ namespace TSP {
             throw std::logic_error("Attemted to get an edge weight which hasn't been assigneg");
         return _edges[node1_id][node2_id];
    }
+   
    size_t Graph::getNumVertices() const{
         return _numVertices;
    }
@@ -118,8 +124,8 @@ namespace TSP {
         return _numVertices * (_numVertices - 1) / 2;
    }
    
-    std::vector<WeightedEdge> Graph::getEdges () const {
-        std::vector<WeightedEdge> edges(getNumEdges());
+    std::vector<WeightedEdge> Graph::getEdges (std::set<Edge> required, std::set<Edge> forbidden) const {
+        std::vector<WeightedEdge> edges(getNumEdges()-forbidden.size());
         for(NodeId i = 0; i < _numVertices; i++){
             for(NodeId j = 0; j < _numVertices; j++){
                 if (i>=j) continue; //avoid double counting edges
@@ -128,9 +134,40 @@ namespace TSP {
                 edges.push_back(edge);
             }
         }
+
+
+        //setEdgeWeights for required and forbidden to min and max int
+        for(Edge edge: forbidden){            
+            int position = getPosition(edge.a(), edge.b());
+            edges[position].setWeight(std::numeric_limits<int>::max());
+        }
+        for(Edge edge: required){            
+            int position = getPosition(edge.a(), edge.b());
+            edges[position].setWeight(std::numeric_limits<int>::min());
+        }
+
         //todo: should we cache this?
         //for now can use std::sort, but to get the runtime better, we can use radix sort
         std::sort(edges.begin(), edges.end());
         return edges;
-    };
+    }
+
+    std::vector<std::vector<int>> Graph::updatedEdgeCosts(std::vector<int> lambda){
+        std::vector<std::vector<int>> updated = _edges;
+        for(int i = 0; i< _numVertices; i++){
+            for(int j = 0; j < _numVertices; j++){
+                if(i != j){
+                    updated[i][j] = _edges[i][j] + lambda[i] + lambda[j];
+                }else{
+                    updated[i][j] = 0;
+                }
+            }
+        }
+        return updated;
+    }
+
+    int Graph::getPosition(NodeId a, NodeId b) const{
+        return a+ (b-1)*b/2;
+    }
+
 }
