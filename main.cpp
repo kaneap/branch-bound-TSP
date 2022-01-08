@@ -10,6 +10,7 @@
 #include <stack>
 #include <stdexcept>
 #include <utility>
+#include <queue>
 #include "graph.hpp"
 #include "graph.hpp"
 #include "tree.hpp"
@@ -131,38 +132,40 @@ namespace TSP{
         return nextLambda;
     }
 
+    bool Compare(std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> a, std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> b){
+        return a.second.first < b.second.first;
+    }
+
     Tree branchAndBound(Graph& graph){
         //todo
         int numVertices = graph.getNumVertices();
-        std::vector<std::pair<std::set<Edge>, std::set<Edge>>> Q;
+        //std::vector<std::pair<std::set<Edge>, std::set<Edge>>> Q;
+        std::priority_queue<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>, std::vector<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>>, decltype(&Compare)> Q(Compare);
+
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>((numVertices, false)));
-        Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
+        std::vector<int> lambda = HK_root(graph);
+        Tree tree(graph, lambda);
+        int cost = getCost(tree, lambda);
+        Q.push(std::make_pair(std::make_pair(std::set<Edge>(), std::set<Edge>()), std::make_pair(cost, lambda)));
+        //Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
         int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
-        float t_0 = -1;
-        bool root = true;
+        float t_0 = accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
 
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
             //TODO: there are more optimal ways to select the next node. See page 3 of the assignment.
-            std::pair<std::set<Edge>, std::set<Edge>> current_pair = Q.back();
-            Q.pop_back();
+            std::pair<std::set<Edge>, std::set<Edge>> current_pair = Q.top().first;
             auto required = current_pair.first;
             auto forbidden = current_pair.second;
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
-            std::vector<int> lambda;
-            if(root){
-                //if we are at the root node in Q, we call HK_root as it runs more iterations
-                lambda = HK_root(graph);
-                t_0 = accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
-                root = false;
-            }else{
-                lambda = HK(graph, lambda, t_0, required, forbidden);
-            }
+            lambda = Q.top().second.second;
+            //lambda = HK(graph, lambda, t_0, required, forbidden);
             Graph modified (graph, lambda);
             Tree t (modified, required, forbidden);
+            //cost = getCost(t, lambda);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
                 if(t.getTourCost() < upperLimit){
@@ -234,9 +237,26 @@ namespace TSP{
                 F_e1.insert(e1);
                 auto F_e2 = forbidden;
                 F_e2.insert(e2);
-                Q.push_back(std::make_pair(required, F_e1));
-                Q.push_back(std::make_pair(R_e1, F_e2));
-                if(incidentRequired > 0) Q.push_back(std::make_pair(R_e1_e2, forbidden));            
+
+                std::vector<int> lambda1 = HK(graph, lambda, t_0, required, F_e1);
+                Graph modified1 (graph, lambda1);
+                Tree t1 (modified1, required, F_e1);
+                int cost1 = getCost(t1, lambda1);
+                Q.push(std::make_pair(std::make_pair(required, F_e1),std::make_pair(cost1, lambda1)));
+
+                std::vector<int> lambda2 = HK(graph, lambda, t_0, R_e1, F_e2);
+                Graph modified2 (graph, lambda2);
+                Tree t2 (modified2, R_e1, F_e2);
+                int cost2 = getCost(t2, lambda2);
+                Q.push(std::make_pair(std::make_pair(R_e1, F_e2),std::make_pair(cost2, lambda2)));
+                
+                if(incidentRequired > 0){
+                    std::vector<int> lambda3 = HK(graph, lambda, t_0, R_e1_e2, forbidden);
+                    Graph modified3 (graph, lambda3);
+                    Tree t3 (modified3, R_e1_e2, forbidden);
+                    int cost3 = getCost(t3, lambda3);
+                    Q.push(std::make_pair(std::make_pair(R_e1_e2, forbidden),std::make_pair(cost3, lambda3)));
+                }          
             }
         }
         return shortestTour;
