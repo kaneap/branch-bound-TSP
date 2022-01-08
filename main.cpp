@@ -161,8 +161,8 @@ namespace TSP{
             }else{
                 lambda = HK(graph, lambda, t_0, required, forbidden);
             }
-
-            Tree t (graph, required, forbidden);
+            Graph modified (graph, lambda);
+            Tree t (modified, required, forbidden);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
                 if(t.getTourCost() < upperLimit){
@@ -174,7 +174,7 @@ namespace TSP{
                 //there needs to be a vertex 2 ≤ i ≤ n with degree > 2.
                 NodeId i = invalid_node_id;
                 //TODO: should looking for this vetex be randomized perhaps?
-                for(NodeId v = 0; v < graph.getNumVertices(); v++){
+                for(NodeId v = 0; v < numVertices; v++){
                     int degree = t.getDegree(v);
                     if (degree > 2){
                         i = v;
@@ -223,7 +223,6 @@ namespace TSP{
                 F_e2.insert(e2);
                 Q.push_back(std::make_pair(required, F_e1));
                 Q.push_back(std::make_pair(R_e1, F_e2));
-                //TODO: omit where the last node is omitted if there is already a required edge incident to i
                 if(incidentRequired > 0) Q.push_back(std::make_pair(R_e1_e2, forbidden));            
             }
         }
