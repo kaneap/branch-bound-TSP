@@ -51,6 +51,7 @@ namespace TSP {
       Graph (size_type const numVertices);
       Graph (std::string const &filename);
       Graph (size_type const numVertices, std::vector<std::vector<int>> edges);
+      Graph (const Graph & other, const std::vector<int> & lambda);
 
       /** @return The number of nodes in the graph. **/
       size_type num_nodes () const;
@@ -78,7 +79,7 @@ namespace TSP {
       // todo: this vector pair pair thing is ugly... probably should be an object...
       std::vector<WeightedEdge> getEdges (std::set<Edge> required, std::set<Edge> forbidden) const;
       std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
-      std::vector<std::vector<int>> updatedEdgeCosts(std::vector<int> lambda);
+      std::vector<std::vector<int>> updatedEdgeCosts(std::vector<int> lambda) const ;
 
    private:
       std::vector<std::vector<int>> _edges;

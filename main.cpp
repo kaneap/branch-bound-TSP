@@ -33,34 +33,32 @@ namespace TSP{
         return tree.getTourCost() + degeeSum;
     }
 
-    /**
-     * @brief Now, let T_λ be a min-c_λ-cost 1-tree (which also minimizes c(T_λ , λ)), and set
-     *  HK(K n , c, λ) := c(T λ , λ)
-    */   
-    int HK(const Graph & graph, std::vector<int> & lambda){
-        //todo  
-    }
 
     std::vector<int> HK(const Graph & graph, std::vector<int> lambda, float t_0, std::set<Edge> required, std::set<Edge> forbidden){
         std::vector<int> lambda(graph.getNumVertices(), 0);
         int n = graph.getNumVertices();
         int N = ceil((n) / 4) + 5;
-        Tree tree (graph, required, forbidden);
+        Tree* tree = nullptr;
+        Tree* lastTree = nullptr;
         float t = t_0;
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
 
         Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(updated, required, forbidden);
+            lastTree = tree;
+            tree = new Tree(updated, required, forbidden);
             for(int v : lambda){
-                lambda = findNextLambda(tree, lambda, t);
-                //todo: also use VJ lambda -> 0.4 and 0.6 in paper
+                lambda = lastTree == nullptr?
+                    findNextLambda(*tree, lambda, t) : 
+                    findNextLambdaVJ(*tree, *lastTree, lambda, t);
             }
             t -= delta;
             delta -= deltaStep;
             Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
+            delete lastTree;
         }
+        delete tree;
         return lambda;
     }
 
@@ -73,21 +71,28 @@ namespace TSP{
         std::vector<int> lambda(graph.getNumVertices(), 0);
         int n = graph.getNumVertices();
         int N = ceil((n*n) / 50) + n + 15;
-        Tree tree (graph);
-        float t = tree.getTourCost() / (2.0 * n);
+        Tree* tree = new Tree(graph);
+        Tree* lastTree = nullptr;
+        float t = tree->getTourCost() / (2.0 * n);
+        delete tree;
+        tree = nullptr;
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
         Graph updated = graph;
         for(int i = 0; i < N; i++){
-            tree = Tree(updated);
+            lastTree = tree;
+            tree = new Tree(updated);
             for(int v : lambda){
-                lambda = findNextLambda(tree, lambda, t);
-                //todo: also use VJ lambda
+                lambda = lastTree == nullptr?
+                    findNextLambda(*tree, lambda, t) : 
+                    findNextLambdaVJ(*tree, *lastTree, lambda, t);
             }
             t -= delta;
             delta -= deltaStep;
             Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
+            delete lastTree;
         }
+        delete tree;
         return lambda;
     }
 
@@ -126,81 +131,49 @@ namespace TSP{
         return nextLambda;
     }
 
-    //probably don't need this
-    /*
-    int findLowerbound(Graph * g){
-        int N = g->getNumVertices(); // todo: do we need to fix the iterations N?
-        std::vector<int> lowerbound (g->getNumVertices());
-        for(int i = 0; i < N; i++){
-            //make g1 a copy of g but with the lambda added to the edge weight (as shown in class)
-            Graph g1 (g->getNumVertices());
-            for(int j = 0; j < N; j++){
-                for(int k = 0; k < N; k++){
-                    if(j != k){
-                        int w = g->getEdgeWeight(j, k) + lowerbound[j] + lowerbound[k];
-                        g1.setEdgeWeight(j, k, w);
-                    }
-                }
-            }
-            Tree t (g1);
-            double t_i = 1.0 / (i + 1); //may need to change this. See page 4 of the assignment
-            for(int j = 0; j < lowerbound.size(); j++){
-                lowerbound[j] += (g->getEdgeWeight(i, j) + t_i * (t.getDegree(j) - 2));
-            }
-
-        }
-        for(int i = 0; i < g->getNumVertices(); i++){
-            for(int j = i+1; j < g->getNumVertices(); j++){
-                int weight = g->getEdgeWeight(i, j);
-                if(weight > 0){
-                    lowerbound += weight;
-                }
-            }
-        }
-        return lowerbound;
-    }
-    */
-
-    void branchAndBound(Graph& graph){
+    Tree branchAndBound(Graph& graph){
         //todo
+        int numVertices = graph.getNumVertices();
         std::vector<std::pair<std::set<Edge>, std::set<Edge>>> Q;
-        std::vector<Edge> seenEdges;
-        std::vector<int> lambda;
+        std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>((numVertices, false)));
         Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
-        int upperLimit =  std::numeric_limits<int>::max(); //TODO: what should initial value be? See page 3 of assignment.
+        int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
         float t_0 = -1;
-         
         bool root = true;
+
+        //When Q is empty, we have a solution.
         while(Q.size() > 0){
+            //TODO: there are more optimal ways to select the next node. See page 3 of the assignment.
             std::pair<std::set<Edge>, std::set<Edge>> current_pair = Q.back();
             Q.pop_back();
             auto required = current_pair.first;
             auto forbidden = current_pair.second;
 
-            // TODO: compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
-            // TODO: create a 1-tree from this λ
+            // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
+            std::vector<int> lambda;
             if(root){
+                //if we are at the root node in Q, we call HK_root as it runs more iterations
                 lambda = HK_root(graph);
                 t_0 = accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
                 root = false;
-            }
-            else{
+            }else{
                 lambda = HK(graph, lambda, t_0, required, forbidden);
             }
+
             Tree t (graph, required, forbidden);
-            if(t.is2Regular()){
-                if(t.getTourCost() < upperLimit) {
+            if(t.is2Regular()) {
+                //the tree is 2 regular, so it is a tour
+                if(t.getTourCost() < upperLimit){
+                    //we check if this tour is better than the best tour we have seen so far
                    upperLimit = t.getTourCost();
                    shortestTour = t;
                 }
-            }
-            else{
-                
-                //there needs to be a vertex 2 ≤ i ≤ n with |δ T (i)| > 2.
+            }else{
+                //there needs to be a vertex 2 ≤ i ≤ n with degree > 2.
                 NodeId i = invalid_node_id;
-                //should looking for this vetex be randomized perhaps?
+                //TODO: should looking for this vetex be randomized perhaps?
                 for(NodeId v = 0; v < graph.getNumVertices(); v++){
                     int degree = t.getDegree(v);
                     if (degree > 2){
@@ -220,12 +193,21 @@ namespace TSP{
                 //remove R and F from connected edges
                 for (auto iter = connectedEdges.begin(), end=connectedEdges.end(); iter != end; iter++) {
                     auto e = *iter;
+                    //TODO: may need to optimize this. Required and forbidden could be n*n matrices,
+                    //but the real performance of the hash map is probably fine.
                     if(required.count(e) != 0 ||  forbidden.count(e) != 0){
                         iter = connectedEdges.erase(iter);
                     }
                 }
                 if (connectedEdges.size() < 2) throw std::runtime_error("No edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
 
+                //calculate the number of required edges incident to e
+                int incidentRequired = 0;
+                for(Edge e : required){
+                    if(e.connectsVertex(i)) incidentRequired++;
+                }
+
+                // TODO: need to check that e1 and e2 haven't been branched on already
                 auto iter = connectedEdges.begin();
                 //add to q 3 new nodes
                 Edge e1 = *iter;
@@ -242,9 +224,10 @@ namespace TSP{
                 Q.push_back(std::make_pair(required, F_e1));
                 Q.push_back(std::make_pair(R_e1, F_e2));
                 //TODO: omit where the last node is omitted if there is already a required edge incident to i
-                Q.push_back(std::make_pair(R_e1_e2, forbidden));            
+                if(incidentRequired > 0) Q.push_back(std::make_pair(R_e1_e2, forbidden));            
             }
         }
+        return shortestTour;
     }
 }
 
@@ -256,6 +239,8 @@ int main(int argc, char*argv[]){
     }
     std::string filename (argv[1]);
     TSP::Graph g(filename);
+    TSP::Tree t = TSP::branchAndBound(g);
+    std::cout << t.toTsplibString() << std::endl;
     return 0;
 }
 

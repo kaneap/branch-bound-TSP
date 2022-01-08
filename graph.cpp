@@ -88,6 +88,13 @@ namespace TSP {
         }
     }
 
+    Graph::Graph(const Graph & other, const std::vector<int> & lambda): 
+        _numVertices(other._numVertices),
+        _edges(other._edges)
+    {
+        _edges = other.updatedEdgeCosts(lambda);
+    }
+
 
     void Graph::setEdgeWeight(NodeId const node1_id, NodeId const node2_id, int const weight){
         if(node1_id == node2_id && weight!=0)
@@ -152,7 +159,7 @@ namespace TSP {
         return edges;
     }
 
-    std::vector<std::vector<int>> Graph::updatedEdgeCosts(std::vector<int> lambda){
+    std::vector<std::vector<int>> Graph::updatedEdgeCosts(std::vector<int> lambda) const {
         std::vector<std::vector<int>> updated = _edges;
         for(int i = 0; i< _numVertices; i++){
             for(int j = 0; j < _numVertices; j++){
