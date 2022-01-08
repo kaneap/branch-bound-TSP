@@ -28,15 +28,50 @@ namespace TSP{
      */
     int getCost(const Tree & tree, std::vector<int> & lambda){
         int degeeSum = 0;
-        for(int i = 0; i < tree.getNumVertices(); i++){
+        for(unsigned int i = 0; i < tree.getNumVertices(); i++){
             degeeSum += ((tree.getDegree(i) - 2) * lambda[i]);
         }
         return tree.getTourCost() + degeeSum;
     }
 
+        /**
+     * @brief 
+     * 
+     * @param graph 
+     * @param lambda 
+     * @return int 
+     */
+    std::vector<int> findNextLambda(const Tree & tree, const std::vector<int> & lambda, float t_i){
+        if(tree.getNumVertices() != lambda.size())
+            throw std::runtime_error("Graph and lambda must have the same number of vertices.");
+        std::vector<int> nextLambda (tree.getNumVertices());
+        for(unsigned int i = 0; i < lambda.size(); i++){
+            nextLambda[i] = lambda[i] + t_i * (tree.getDegree(i) - 2);    
+        }
+        return nextLambda;
+    }
+
+    /**
+     * @brief 
+     * 
+     * @param graph 
+     * @param lambda 
+     * @return int 
+     */
+    std::vector<int> findNextLambdaVJ(const Tree & tree, const Tree & lastTree, std::vector<int> lambda, float t_i){
+        if(tree.getNumVertices() != lambda.size() || lastTree.getNumVertices() != lambda.size())
+            throw std::runtime_error("Graph and lambda must have the same number of vertices.");
+        std::vector<int> nextLambda (tree.getNumVertices());
+        for(unsigned int i = 0; i < lambda.size(); i++){
+            //if we have time, might want to get rid of magic numbers
+            nextLambda[i] = lambda[i] + t_i * (0.6 * (tree.getDegree(i) - 2) + 0.4 * (lastTree.getDegree(i) - 2));    
+        }
+        return nextLambda;
+    }
+
+
 
     std::vector<int> HK(const Graph & graph, std::vector<int> lambda, float t_0, std::set<Edge> required, std::set<Edge> forbidden){
-        std::vector<int> lambda(graph.getNumVertices(), 0);
         int n = graph.getNumVertices();
         int N = ceil((n) / 4) + 5;
         Tree* tree = nullptr;
@@ -49,11 +84,9 @@ namespace TSP{
         for(int i = 0; i < N; i++){
             lastTree = tree;
             tree = new Tree(updated, required, forbidden);
-            for(int v : lambda){
-                lambda = lastTree == nullptr?
+            lambda = lastTree == nullptr?
                     findNextLambda(*tree, lambda, t) : 
                     findNextLambdaVJ(*tree, *lastTree, lambda, t);
-            }
             t -= delta;
             delta -= deltaStep;
             Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
@@ -83,11 +116,9 @@ namespace TSP{
         for(int i = 0; i < N; i++){
             lastTree = tree;
             tree = new Tree(updated);
-            for(int v : lambda){
-                lambda = lastTree == nullptr?
-                    findNextLambda(*tree, lambda, t) : 
-                    findNextLambdaVJ(*tree, *lastTree, lambda, t);
-            }
+            lambda = lastTree == nullptr?
+                findNextLambda(*tree, lambda, t) : 
+                findNextLambdaVJ(*tree, *lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
             Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
@@ -97,57 +128,23 @@ namespace TSP{
         return lambda;
     }
 
-    /**
-     * @brief 
-     * 
-     * @param graph 
-     * @param lambda 
-     * @return int 
-     */
-    std::vector<int> findNextLambda(const Tree & tree, const std::vector<int> & lambda, float t_i){
-        if(tree.getNumVertices() != lambda.size())
-            throw std::runtime_error("Graph and lambda must have the same number of vertices.");
-        std::vector<int> nextLambda (tree.getNumVertices());
-        for(int i = 0; i < lambda.size(); i++){
-            nextLambda[i] = lambda[i] + t_i * (tree.getDegree(i) - 2);    
-        }
-        return nextLambda;
-    }
 
-    /**
-     * @brief 
-     * 
-     * @param graph 
-     * @param lambda 
-     * @return int 
-     */
-    std::vector<int> findNextLambdaVJ(const Tree & tree, const Tree & lastTree, std::vector<int> lambda, float t_i){
-        if(tree.getNumVertices() != lambda.size() || lastTree.getNumVertices() != lambda.size())
-            throw std::runtime_error("Graph and lambda must have the same number of vertices.");
-        std::vector<int> nextLambda (tree.getNumVertices());
-        for(int i = 0; i < lambda.size(); i++){
-            //if we have time, might want to get rid of magic numbers
-            nextLambda[i] = lambda[i] + t_i * (0.6 * (tree.getDegree(i) - 2) + 0.4 * (lastTree.getDegree(i) - 2));    
-        }
-        return nextLambda;
-    }
 
     bool Compare(std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> a, std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> b){
         return a.second.first < b.second.first;
     }
 
     Tree branchAndBound(Graph& graph){
-        //todo
-        int numVertices = graph.getNumVertices();
-        //std::vector<std::pair<std::set<Edge>, std::set<Edge>>> Q;
+
+        size_t numVertices = graph.getNumVertices();
         std::priority_queue<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>, std::vector<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>>, decltype(&Compare)> Q(Compare);
 
-        std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>((numVertices, false)));
+        std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
         Tree tree(graph, lambda);
         int cost = getCost(tree, lambda);
         Q.push(std::make_pair(std::make_pair(std::set<Edge>(), std::set<Edge>()), std::make_pair(cost, lambda)));
-        //Q.push_back(std::make_pair(std::set<Edge>(), std::set<Edge>()));
+
         int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;

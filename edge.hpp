@@ -12,10 +12,10 @@ namespace TSP {
 
     public:
         Edge(NodeId a, NodeId b);
-        ~Edge();
-        bool operator== (const Edge& other);
-        const NodeId a() const;
-        const NodeId b() const;
+        bool operator== (const Edge& other) const;
+        bool operator< (const Edge& other) const;
+        NodeId a() const;
+        NodeId b() const;
         NodeId getOtherVertex(NodeId other);
         bool connectsVertex(NodeId v);
     };
