@@ -63,7 +63,7 @@ namespace TSP
     }
 
     std::vector<NodeId> Tree::getTour(){
-        if(!is2Regular) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
+        if(!is2Regular()) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
         std::vector<std::vector<NodeId>> connections; 
         std::vector<NodeId> tour(this->_numVertices);
         for(auto e : _edges){
@@ -81,12 +81,11 @@ namespace TSP
             prev = curr;
             curr = next;
         }while(curr != 0);
-        
-
+        return tour;
     }
 
     std::string Tree::toTsplibString(){
-        if(!is2Regular) throw std::runtime_error("Attemted to get tour string of a 1-tree which isn't 2-regular");
+        if(!is2Regular()) throw std::runtime_error("Attemted to get tour string of a 1-tree which isn't 2-regular");
 
         std::stringstream ss;
         int numEdges = this->_edges.size();
@@ -124,7 +123,7 @@ namespace TSP
         return connected;
     }
 
-    int Tree::getNumVertices() const
+    size_t Tree::getNumVertices() const
     {
         return _numVertices;
     }

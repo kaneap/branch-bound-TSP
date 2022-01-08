@@ -1,6 +1,4 @@
 #include "graph.hpp"
-#include <cmath>
-
 
 namespace TSP {
     void Graph::initWeights(){
@@ -8,16 +6,18 @@ namespace TSP {
     }
 
     Graph::Graph(size_t const numVertices):
-    _numVertices(numVertices),
-    _edges(numVertices)
+    _edges(numVertices),
+    _numVertices(numVertices)
     {
         _numVertices = numVertices;
         initWeights();
     }
 
     Graph::Graph(size_type const numVertices, std::vector<std::vector<int>> edges):
-    _numVertices(numVertices),
-    _edges(edges){}
+    _edges(edges),
+    _numVertices(numVertices)
+    {}
+    
 
 
     Graph::Graph (std::string const &filename){
@@ -55,7 +55,6 @@ namespace TSP {
                         while(token.compare("")==0){
                             getline(ss, token, ' ');
                         }
-                        int i = std::stoi(token);
                         getline(ss, token, ' ');
                         while(token.compare("")==0){
                             getline(ss, token, ' ');
@@ -78,8 +77,8 @@ namespace TSP {
         }
 
         initWeights();
-        for(int i = 0; i< _numVertices;i++){
-            for(int j = 0; j< i; j++){
+        for(unsigned int i = 0; i< _numVertices;i++){
+            for(unsigned int j = 0; j< i; j++){
                 int difX = xcoordinates[i]-xcoordinates[j];
                 int difY = ycoordinates[i]-ycoordinates[j];
                 int distance = round(sqrt(difX*difX + difY*difY));
@@ -89,20 +88,17 @@ namespace TSP {
     }
 
     Graph::Graph(const Graph & other, const std::vector<int> & lambda): 
-        _numVertices(other._numVertices),
-        _edges(other._edges)
+        _edges(other._edges),
+        _numVertices(other._numVertices)
     {
         _edges = other.updatedEdgeCosts(lambda);
     }
-
 
     void Graph::setEdgeWeight(NodeId const node1_id, NodeId const node2_id, int const weight){
         if(node1_id == node2_id && weight!=0)
             throw std::runtime_error("Cannot set edge weight for self-loops.");
         if(node1_id > _edges.size() || node2_id > _edges.size())
             throw std::runtime_error("Node id out of bounds.");
-        if(node1_id < 0 || node2_id < 0)
-            throw std::runtime_error("Node id must be non-negative.");
         if(weight < 0)
             throw std::runtime_error("Edge weight must be non-negative.");
         if(_edges[node1_id][node2_id] >= 0)
@@ -117,8 +113,6 @@ namespace TSP {
             throw std::runtime_error("Cannot get edge weight for self-loops.");
         if(node1_id > _edges.size() || node2_id > _edges.size())
             throw std::runtime_error("Node id out of bounds.");
-        if(node1_id < 0 || node2_id < 0)
-            throw std::runtime_error("Node id must be non-negative.");
         if(_edges[node1_id][node2_id] < 0)
             throw std::logic_error("Attemted to get an edge weight which hasn't been assigneg");
         return _edges[node1_id][node2_id];
@@ -132,7 +126,8 @@ namespace TSP {
    }
    
     std::vector<WeightedEdge> Graph::getEdges (std::set<Edge> required, std::set<Edge> forbidden) const {
-        std::vector<WeightedEdge> edges(getNumEdges()-forbidden.size());
+        std::vector<WeightedEdge> edges;
+        edges.reserve(getNumEdges()-forbidden.size());
         for(NodeId i = 0; i < _numVertices; i++){
             for(NodeId j = 0; j < _numVertices; j++){
                 if (i>=j) continue; //avoid double counting edges
@@ -161,8 +156,8 @@ namespace TSP {
 
     std::vector<std::vector<int>> Graph::updatedEdgeCosts(std::vector<int> lambda) const {
         std::vector<std::vector<int>> updated = _edges;
-        for(int i = 0; i< _numVertices; i++){
-            for(int j = 0; j < _numVertices; j++){
+        for(unsigned int i = 0; i < _numVertices; i++){
+            for(unsigned int j = 0; j < _numVertices; j++){
                 if(i != j){
                     updated[i][j] = _edges[i][j] + lambda[i] + lambda[j];
                 }else{
@@ -175,6 +170,19 @@ namespace TSP {
 
     int Graph::getPosition(NodeId a, NodeId b) const{
         return a+ (b-1)*b/2;
+    }
+
+    std::vector<WeightedEdge> Graph::getConnectedEdges(NodeId v) const{
+        std::vector<WeightedEdge> edges;
+        edges.reserve(_numVertices - 1);
+        for(NodeId i = 0; i < _numVertices; i++){
+            if(i != v){
+                int weight = getEdgeWeight(v, i);
+                WeightedEdge edge (v, i, weight);
+                edges.push_back(edge);
+            }
+        }
+        return edges;
     }
 
 }

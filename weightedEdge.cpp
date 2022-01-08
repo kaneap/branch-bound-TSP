@@ -10,5 +10,5 @@ namespace TSP {
     void WeightedEdge::setWeight(int weight){_weight = weight;}
 
 
-    bool WeightedEdge::operator< (const WeightedEdge& rhs){return this->_weight < rhs._weight;}
+    bool WeightedEdge::operator< (const WeightedEdge& rhs) const {return this->_weight < rhs._weight;}
 }

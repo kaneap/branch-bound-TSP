@@ -9,10 +9,9 @@ namespace TSP {
         int _weight;
     public:
         WeightedEdge(NodeId a, NodeId b, int weight);
-        ~WeightedEdge();
         int getWeight();
         void setWeight(int weight);
-        bool operator< (const WeightedEdge& rhs);
+        bool operator< (const WeightedEdge& rhs) const;
     };
 }
 

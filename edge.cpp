@@ -12,13 +12,23 @@ namespace TSP {
         }
     }
 
-    bool Edge::operator== (const Edge& other){
+    bool Edge::operator== (const Edge& other) const {
         return ((this->_a == other._a) && (this->_b == other._b));
     }
 
-    const NodeId Edge::a(){return this->_a;}
+    bool Edge::operator< (const Edge& other) const {
+        if(this->_a < other._a){
+            return true;
+        } else if(this->_a == other._a){
+            return this->_b < other._b;
+        } else {
+            return false;
+        }
+    }
 
-    const NodeId Edge::b(){return this->_b;}
+    NodeId Edge::a() const {return this->_a;}
+
+    NodeId Edge::b() const {return this->_b;}
 
     NodeId Edge::getOtherVertex(NodeId other){
         if(this->a() != other && this->b() != other)

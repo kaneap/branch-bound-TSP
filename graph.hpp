@@ -1,13 +1,6 @@
 #ifndef GRAPH_HPP
 #define GRAPH_HPP
 
-/**
-   @file graph.hpp
-
-   @brief This file provides a simple class @c Graph to model undirected graphs, written specifically for the purpose of
-   implementing Edmonds' Cardinality Matching Algorithm.
-**/
-
 #include <vector>
 #include <limits>
 #include <algorithm>
@@ -18,6 +11,7 @@
 #include <stdexcept>
 #include <utility>
 #include <fstream>
+#include <cmath>
 #include <set>
 #include "nodeId.hpp"
 #include "weightedEdge.hpp"
