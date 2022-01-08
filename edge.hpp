@@ -14,10 +14,16 @@ namespace TSP {
         Edge(NodeId a, NodeId b);
         ~Edge();
         bool operator== (const Edge& other);
-        const NodeId a();
-        const NodeId b();
+        const NodeId a() const;
+        const NodeId b() const;
         NodeId getOtherVertex(NodeId other);
         bool connectsVertex(NodeId v);
+    };
+
+    struct EdgeHasher {
+        size_t operator()(const Edge& e) const {
+            return (e.a() * 31 + e.b()) % SIZE_MAX;
+        }
     };
 }
 

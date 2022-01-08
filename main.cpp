@@ -207,11 +207,24 @@ namespace TSP{
                     if(e.connectsVertex(i)) incidentRequired++;
                 }
 
-                // TODO: need to check that e1 and e2 haven't been branched on already
                 auto iter = connectedEdges.begin();
                 //add to q 3 new nodes
+                Edge e = *iter;
+                //TODO: is this what is meant by "two distinct edges in T incident to i that we have not yet branched on"?
+                //repeat until we have an unseen edge
+                while(seenEdges[e.a()][e.b()]){
+                    if(iter == connectedEdges.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
+                    iter++;
+                    e = *iter;
+                }
+                seenEdges[e.a()][e.b()] = true;
                 Edge e1 = *iter;
-                iter++;
+                //repeat until we have an unseen edge
+                while(seenEdges[e.a()][e.b()]){
+                    if(iter == connectedEdges.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
+                    iter++;
+                    e = *iter;
+                }
                 Edge e2 = *iter;
                 auto R_e1 = required;
                 R_e1.insert(e1);
