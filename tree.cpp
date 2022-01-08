@@ -106,7 +106,7 @@ namespace TSP
 
     int Tree::getTourCost() const
     {
-        if (!is2Regular()) return -1; //TODO: return exeption?? Or just invalid value?
+        //if (!is2Regular()) return -1; //TODO: return exeption?? Or just invalid value?
         int sum = 0;
         for(WeightedEdge e : _edges){
             sum += e.getWeight();
