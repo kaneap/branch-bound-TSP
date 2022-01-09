@@ -20,7 +20,8 @@ namespace TSP
 
 
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
-    Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden)
+    Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden):
+    _vertexDegrees(graph.getNumVertices())
     {
         //DONE: require and forbid edges
         //DONE in main: use modified weights via lambda
@@ -34,27 +35,49 @@ namespace TSP
         this->_numVertices = graph.getNumVertices();
         for (NodeId i = 0; i < graph.getNumVertices(); i++)
         {
-            if (i == one)
-                continue; //we exclude the 1 in the 1-tree
-            vertexSets[i] = Union::makeSet(i);
+            //if (i == one)
+            //    continue; //we exclude the 1 in the 1-tree
+            vertexSets.push_back(Union::makeSet(i));
         }
         auto allEdges = graph.getEdges(required, forbidden);
 
+        unsigned count = 0;
         for (auto e : allEdges)
         {
-            edges.push_back(e);
-            NodeId u = e.a();
-            NodeId v = e.b();
-            if (u == one || v == one)
-                continue;
+            if (count < graph.getNumVertices()-1){
+                NodeId u = e.a();
+                NodeId v = e.b();
+                if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
+                    if (u != one && v != one)
+                    {
+                        edges.push_back(e);
+                        Union::makeUnion(vertexSets[u], vertexSets[v]);
+                    }
+                }
+            }
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
         auto oneEdges = graph.getConnectedEdges(one);
+
+        WeightedEdge first = oneEdges[0];
+        WeightedEdge second = oneEdges[1];
+        for(unsigned i = 2; i < oneEdges.size(); i++){
+            WeightedEdge current = oneEdges[i];
+            if (current < first)
+            {
+                second = first;
+                first = current;
+            }else if (current < second)
+            {
+                second = current;
+            } 
+        }
         //todo: sort this
-        edges.push_back(oneEdges[0]);
-        edges.push_back(oneEdges[1]);
+        edges.push_back(first);
+        edges.push_back(second);
         _edges = edges;
+
         for (auto e : _edges)
         {
             _vertexDegrees[e.a()]++;
