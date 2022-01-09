@@ -17,6 +17,9 @@ namespace TSP {
     _edges(edges),
     _numVertices(numVertices)
     {}
+
+    Graph::Graph(const Graph & graph): _edges(graph._edges), _numVertices(graph._numVertices) {
+    }
     
 
 

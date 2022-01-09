@@ -10,7 +10,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/main",
-            "args": ["queen5_5.dmx"],
+            "args": ["./given_instances/berlin52.tsp"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -23,7 +23,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "C/C++: g++ build",
+            "preLaunchTask": "my build",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]

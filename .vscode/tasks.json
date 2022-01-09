@@ -12,7 +12,7 @@
         },
         {
             "type": "cppbuild",
-            "label": "Just build the dang program",
+            "label": "my build",
             "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
