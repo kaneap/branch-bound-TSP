@@ -127,7 +127,7 @@ namespace TSP {
    
     std::vector<WeightedEdge> Graph::getEdges (std::set<Edge> required, std::set<Edge> forbidden) const {
         std::vector<WeightedEdge> edges;
-        edges.reserve(getNumEdges()-forbidden.size());
+        //edges.reserve(getNumEdges());
         for(NodeId i = 0; i < _numVertices; i++){
             for(NodeId j = 0; j < _numVertices; j++){
                 if (i>=j) continue; //avoid double counting edges

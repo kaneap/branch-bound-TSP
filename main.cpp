@@ -120,7 +120,7 @@ namespace TSP{
                 findNextLambdaVJ(*tree, *lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
+            updated = Graph(updated, lambda);
             delete lastTree;
         }
         delete tree;
@@ -140,7 +140,7 @@ namespace TSP{
 
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
-        Tree tree(graph, lambda);
+        Tree tree(Graph(graph, lambda));
         int cost = getCost(tree, lambda);
         Q.push(std::make_pair(std::make_pair(std::set<Edge>(), std::set<Edge>()), std::make_pair(cost, lambda)));
 
@@ -158,6 +158,7 @@ namespace TSP{
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
             lambda = Q.top().second.second;
+            Q.pop();
             //lambda = HK(graph, lambda, t_0, required, forbidden);
             Graph modified (graph, lambda);
             Tree t (modified, required, forbidden);

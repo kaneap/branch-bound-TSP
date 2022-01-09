@@ -21,6 +21,7 @@ namespace TSP
 
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
     Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden):
+    _edges(),
     _vertexDegrees(graph.getNumVertices())
     {
         //DONE: require and forbid edges
@@ -52,6 +53,7 @@ namespace TSP
                     {
                         edges.push_back(e);
                         Union::makeUnion(vertexSets[u], vertexSets[v]);
+                        count++;
                     }
                 }
             }
@@ -97,8 +99,8 @@ namespace TSP
 
     std::vector<NodeId> Tree::getTour(){
         if(!is2Regular()) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
-        std::vector<std::vector<NodeId>> connections; 
-        std::vector<NodeId> tour(this->_numVertices);
+        std::vector<std::vector<NodeId>> connections(this->_numVertices); 
+        std::vector<NodeId> tour;
         for(auto e : _edges){
             connections[e.a()].push_back(e.b());
             connections[e.b()].push_back(e.a());
