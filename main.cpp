@@ -12,7 +12,6 @@
 #include <utility>
 #include <queue>
 #include "graph.hpp"
-#include "graph.hpp"
 #include "tree.hpp"
 #include "union.hpp"
 #include "edge.hpp"
@@ -165,6 +164,7 @@ namespace TSP{
             //cost = getCost(t, lambda);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
+                //maybe we should do this step already before adding to Q (according to the assignment)
                 if(t.getTourCost() < upperLimit){
                     //we check if this tour is better than the best tour we have seen so far
                    upperLimit = t.getTourCost();
@@ -239,20 +239,26 @@ namespace TSP{
                 Graph modified1 (graph, lambda1);
                 Tree t1 (modified1, required, F_e1);
                 int cost1 = getCost(t1, lambda1);
-                Q.push(std::make_pair(std::make_pair(required, F_e1),std::make_pair(cost1, lambda1)));
+                if(cost1 < upperLimit){
+                    Q.push(std::make_pair(std::make_pair(required, F_e1),std::make_pair(cost1, lambda1)));
+                }
 
                 std::vector<int> lambda2 = HK(graph, lambda, t_0, R_e1, F_e2);
                 Graph modified2 (graph, lambda2);
                 Tree t2 (modified2, R_e1, F_e2);
                 int cost2 = getCost(t2, lambda2);
-                Q.push(std::make_pair(std::make_pair(R_e1, F_e2),std::make_pair(cost2, lambda2)));
+                if(cost2 < upperLimit){
+                    Q.push(std::make_pair(std::make_pair(R_e1, F_e2),std::make_pair(cost2, lambda2)));
+                }
                 
                 if(incidentRequired > 0){
                     std::vector<int> lambda3 = HK(graph, lambda, t_0, R_e1_e2, forbidden);
                     Graph modified3 (graph, lambda3);
                     Tree t3 (modified3, R_e1_e2, forbidden);
                     int cost3 = getCost(t3, lambda3);
-                    Q.push(std::make_pair(std::make_pair(R_e1_e2, forbidden),std::make_pair(cost3, lambda3)));
+                    if(cost3 < upperLimit){
+                        Q.push(std::make_pair(std::make_pair(R_e1_e2, forbidden),std::make_pair(cost3, lambda3)));
+                    }
                 }          
             }
         }
