@@ -9,6 +9,16 @@ namespace TSP
 
     Tree::Tree(const Graph & graph): Tree(graph, std::set<Edge>(), std::set<Edge>()){}
 
+    Tree::Tree(const Graph & graph, std::vector<int> lambda){
+        Tree(graph, lambda, std::set<Edge>(), std::set<Edge>());
+    }
+
+    Tree::Tree(const Graph & graph, std::vector<int> lambda, std::set<Edge> required, std::set<Edge> forbidden){
+        Graph modified(graph, lambda);
+        Tree(modified, required, forbidden);
+    }
+
+
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
     Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden)
     {
