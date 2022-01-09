@@ -46,7 +46,6 @@ namespace TSP {
       Graph (std::string const &filename);
       Graph (size_type const numVertices, std::vector<std::vector<int>> edges);
       Graph (const Graph & other, const std::vector<int> & lambda);
-      Graph (const Graph & graph);
 
       /** @return The number of nodes in the graph. **/
       size_type num_nodes () const;
