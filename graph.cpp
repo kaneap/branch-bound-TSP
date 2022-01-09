@@ -17,8 +17,6 @@ namespace TSP {
     _edges(edges),
     _numVertices(numVertices)
     {}
-    
-
 
     Graph::Graph (std::string const &filename){
         std::vector<int> xcoordinates;
@@ -99,8 +97,6 @@ namespace TSP {
             throw std::runtime_error("Cannot set edge weight for self-loops.");
         if(node1_id > _edges.size() || node2_id > _edges.size())
             throw std::runtime_error("Node id out of bounds.");
-        if(weight < 0)
-            throw std::runtime_error("Edge weight must be non-negative.");
         if(_edges[node1_id][node2_id] >= 0)
             throw std::runtime_error("Edge weight was already assigned.");    
         _edges[node1_id][node2_id] = weight;
@@ -113,8 +109,6 @@ namespace TSP {
             throw std::runtime_error("Cannot get edge weight for self-loops.");
         if(node1_id > _edges.size() || node2_id > _edges.size())
             throw std::runtime_error("Node id out of bounds.");
-        if(_edges[node1_id][node2_id] < 0)
-            throw std::logic_error("Attemted to get an edge weight which hasn't been assigneg");
         return _edges[node1_id][node2_id];
    }
    

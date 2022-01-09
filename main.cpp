@@ -88,7 +88,7 @@ namespace TSP{
                     findNextLambdaVJ(*tree, *lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            Graph updated(updated.getNumVertices(), updated.updatedEdgeCosts(lambda));
+            updated = Graph(updated, lambda);
             delete lastTree;
         }
         delete tree;
@@ -270,7 +270,7 @@ namespace TSP{
 
 int main(int argc, char*argv[]){
     if(argc != 2) {
-        std::cout << "Please specify a filename of a DIMACS format graph file!" << std::endl;
+        std::cout << "Please specify a filename of a TSPLIB format graph file!" << std::endl;
         return 1;
     }
     std::string filename (argv[1]);
