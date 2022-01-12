@@ -88,7 +88,7 @@ namespace TSP{
                     findNextLambdaVJ(*tree, *lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            updated = Graph(graph, lambda);
+            updated = Graph(updated, lambda);
             delete lastTree;
         }
         delete tree;
@@ -120,7 +120,7 @@ namespace TSP{
                 findNextLambdaVJ(*tree, *lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            updated = Graph(graph, lambda);
+            updated = Graph(updated, lambda);
             delete lastTree;
         }
         delete tree;
@@ -134,7 +134,7 @@ namespace TSP{
 
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
-        Tree tree(graph, lambda);
+        Tree tree(Graph(graph, lambda));
         int cost = getCost(tree, lambda);
         Q.push(std::set<Edge>(), std::set<Edge>(), cost, lambda);
 
