@@ -16,6 +16,10 @@ namespace TSP {
         return ((this->_a == other._a) && (this->_b == other._b));
     }
 
+    bool Edge::operator!= (const Edge& other) const {
+        return !(*this == other);
+    }
+
     bool Edge::operator< (const Edge& other) const {
         if(this->_a < other._a){
             return true;

@@ -13,6 +13,7 @@ namespace TSP {
     public:
         Edge(NodeId a, NodeId b);
         bool operator== (const Edge& other) const;
+        bool operator!= (const Edge& other) const;
         bool operator< (const Edge& other) const;
         NodeId a() const;
         NodeId b() const;

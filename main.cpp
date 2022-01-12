@@ -10,7 +10,7 @@
 #include <stack>
 #include <stdexcept>
 #include <utility>
-#include <queue>
+#include "myQueue.hpp"
 #include "graph.hpp"
 #include "tree.hpp"
 #include "union.hpp"
@@ -127,22 +127,16 @@ namespace TSP{
         return lambda;
     }
 
-
-
-    bool Compare(std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> a, std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>> b){
-        return a.second.first < b.second.first;
-    }
-
     Tree branchAndBound(Graph& graph){
 
         size_t numVertices = graph.getNumVertices();
-        std::priority_queue<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>, std::vector<std::pair<std::pair<std::set<Edge>, std::set<Edge>>,std::pair<int, std::vector<int>>>>, decltype(&Compare)> Q(Compare);
+        MyQueue Q;
 
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
         Tree tree(graph, lambda);
         int cost = getCost(tree, lambda);
-        Q.push(std::make_pair(std::make_pair(std::set<Edge>(), std::set<Edge>()), std::make_pair(cost, lambda)));
+        Q.push(std::set<Edge>(), std::set<Edge>(), cost, lambda);
 
         int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
@@ -152,12 +146,12 @@ namespace TSP{
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
             //TODO: there are more optimal ways to select the next node. See page 3 of the assignment.
-            std::pair<std::set<Edge>, std::set<Edge>> current_pair = Q.top().first;
-            auto required = current_pair.first;
-            auto forbidden = current_pair.second;
+            auto elem = Q.pop();
+            auto required = elem.getRequired();
+            auto forbidden = elem.getForbidden();
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
-            lambda = Q.top().second.second;
+            lambda = elem.getLambda();
             //lambda = HK(graph, lambda, t_0, required, forbidden);
             Graph modified (graph, lambda);
             Tree t (modified, required, forbidden);
@@ -165,7 +159,7 @@ namespace TSP{
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
                 //maybe we should do this step already before adding to Q (according to the assignment)
-                if(t.getTourCost() < upperLimit){
+                if(cost < upperLimit){
                     //we check if this tour is better than the best tour we have seen so far
                    upperLimit = t.getTourCost();
                    shortestTour = t;
@@ -183,23 +177,27 @@ namespace TSP{
                 }
                 if(i == invalid_node_id) throw std::runtime_error("No edge has degree > 2 in the tree... something is wrong...");
 
-                std::set<WeightedEdge> connectedEdges = t.getConnectedEdges(i);
-                for(WeightedEdge e : connectedEdges){
-                    if(required.count(e) != 0 ||  forbidden.count(e) != 0){
-                        connectedEdges.erase(e);
-                    }
-                }
+
+                auto connectedEdges = t.getConnectedEdges(i);
+                //the connected edges not in R or F
+                auto edgesNotRF = connectedEdges;
+                int requiredCount, forbiddenCount = 0;
 
                 //remove R and F from connected edges
                 for (auto iter = connectedEdges.begin(), end=connectedEdges.end(); iter != end; iter++) {
                     auto e = *iter;
                     //TODO: may need to optimize this. Required and forbidden could be n*n matrices,
                     //but the real performance of the hash map is probably fine.
-                    if(required.count(e) != 0 ||  forbidden.count(e) != 0){
-                        iter = connectedEdges.erase(iter);
+                    if(required.count(e) != 0){
+                        edgesNotRF.erase(iter);
+                        requiredCount++;
+                    } else if (forbidden.count(e) != 0){
+                        edgesNotRF.erase(iter);
+                        forbiddenCount++;
                     }
                 }
-                if (connectedEdges.size() < 2) throw std::runtime_error("No edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
+            
+                if (edgesNotRF.size() < 2) throw std::runtime_error("An edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
 
                 //calculate the number of required edges incident to e
                 int incidentRequired = 0;
@@ -207,13 +205,13 @@ namespace TSP{
                     if(e.connectsVertex(i)) incidentRequired++;
                 }
 
-                auto iter = connectedEdges.begin();
+                auto iter = edgesNotRF.begin();
                 //add to q 3 new nodes
                 Edge e = *iter;
                 //TODO: is this what is meant by "two distinct edges in T incident to i that we have not yet branched on"?
                 //repeat until we have an unseen edge
                 while(seenEdges[e.a()][e.b()]){
-                    if(iter == connectedEdges.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
+                    if(iter == edgesNotRF.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
                     iter++;
                     e = *iter;
                 }
@@ -221,7 +219,7 @@ namespace TSP{
                 Edge e1 = *iter;
                 //repeat until we have an unseen edge
                 while(seenEdges[e.a()][e.b()]){
-                    if(iter == connectedEdges.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
+                    if(iter == edgesNotRF.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
                     iter++;
                     e = *iter;
                 }
@@ -235,33 +233,62 @@ namespace TSP{
                 auto F_e2 = forbidden;
                 F_e2.insert(e2);
 
+                if(forbiddenCount + 1 == numVertices - 3){
+                    //require all remaining edges
+                    for(Edge e : edgesNotRF){
+                        if(e1 != e){
+                            required.insert(e);
+                        }
+                    }
+                }
                 std::vector<int> lambda1 = HK(graph, lambda, t_0, required, F_e1);
                 Graph modified1 (graph, lambda1);
                 Tree t1 (modified1, required, F_e1);
                 int cost1 = getCost(t1, lambda1);
                 if(cost1 < upperLimit){
-                    Q.push(std::make_pair(std::make_pair(required, F_e1),std::make_pair(cost1, lambda1)));
+                    Q.push(required, F_e1,cost1, lambda1);
                 }
-
+                
+                if(requiredCount == 1){
+                    for(Edge e : edgesNotRF){
+                        if(e1 != e){
+                            F_e2.insert(e);
+                        }
+                    }
+                }
+                if(forbiddenCount + 1 == numVertices - 3){
+                    //require all remaining edges
+                    for(Edge e : edgesNotRF){
+                        if(e1 != e && e2 != e){
+                            R_e1.insert(e);
+                        }
+                    }
+                }
                 std::vector<int> lambda2 = HK(graph, lambda, t_0, R_e1, F_e2);
                 Graph modified2 (graph, lambda2);
                 Tree t2 (modified2, R_e1, F_e2);
                 int cost2 = getCost(t2, lambda2);
                 if(cost2 < upperLimit){
-                    Q.push(std::make_pair(std::make_pair(R_e1, F_e2),std::make_pair(cost2, lambda2)));
+                    Q.push(R_e1, F_e2, cost2, lambda2);
                 }
                 
-                if(incidentRequired > 0){
+                if(requiredCount == 0){
+                    for(Edge e : edgesNotRF){
+                        if(e1 != e && e2 != e){
+                            forbidden.insert(e);
+                        }
+                    }
                     std::vector<int> lambda3 = HK(graph, lambda, t_0, R_e1_e2, forbidden);
                     Graph modified3 (graph, lambda3);
                     Tree t3 (modified3, R_e1_e2, forbidden);
                     int cost3 = getCost(t3, lambda3);
                     if(cost3 < upperLimit){
-                        Q.push(std::make_pair(std::make_pair(R_e1_e2, forbidden),std::make_pair(cost3, lambda3)));
+                        Q.push(R_e1_e2, forbidden, cost3, lambda3);
                     }
                 }          
             }
         }
+        if(upperLimit == std::numeric_limits<int>::max()) throw std::runtime_error("No tour found");
         return shortestTour;
     }
 }
