@@ -70,7 +70,11 @@ namespace TSP{
 
 
 
-    std::vector<int> HK(const Graph & graph, std::vector<int> lambda, float t_0, std::set<Edge> required, std::set<Edge> forbidden){
+    std::vector<int> HK(
+            const Graph & graph, 
+            std::vector<int> lambda, 
+            float t_0, 
+            const RFList & rf){
         int n = graph.getNumVertices();
         int N = ceil((n) / 4) + 5;
         Tree* tree = nullptr;
@@ -82,7 +86,7 @@ namespace TSP{
         Graph updated = graph;
         for(int i = 0; i < N; i++){
             lastTree = tree;
-            tree = new Tree(updated, required, forbidden);
+            tree = new Tree(updated, rf);
             lambda = lastTree == nullptr?
                     findNextLambda(*tree, lambda, t) : 
                     findNextLambdaVJ(*tree, *lastTree, lambda, t);
@@ -127,6 +131,7 @@ namespace TSP{
         return lambda;
     }
 
+
     Tree branchAndBound(Graph& graph){
 
         size_t numVertices = graph.getNumVertices();
@@ -136,7 +141,9 @@ namespace TSP{
         std::vector<int> lambda = HK_root(graph);
         Tree rootTree(Graph(graph, lambda));
         int cost = getCost(rootTree, lambda);
-        Q.push(std::set<Edge>(), std::set<Edge>(), cost, lambda);
+        Q.push(RFList(numVertices), 
+            cost, 
+            lambda);
 
         int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
@@ -147,14 +154,13 @@ namespace TSP{
         while(Q.size() > 0){
             //TODO: there are more optimal ways to select the next node. See page 3 of the assignment.
             auto elem = Q.pop();
-            auto required = elem.getRequired();
-            auto forbidden = elem.getForbidden();
+            auto rf = elem.getRF();
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
             lambda = elem.getLambda();
             //lambda = HK(graph, lambda, t_0, required, forbidden);
             Graph modified (graph, lambda);
-            Tree t (modified, required, forbidden);
+            Tree t (modified, rf);
             //cost = getCost(t, lambda);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
@@ -190,10 +196,10 @@ namespace TSP{
                     auto e = *iter;
                     //TODO: may need to optimize this. Required and forbidden could be n*n matrices,
                     //but the real performance of the hash map is probably fine.
-                    if(required.count(e) != 0){
+                    if(rf.isRequired(e)){
                         iter = edgesNotRF.erase(iter);
                         requiredCount++;
-                    } else if (forbidden.count(e) != 0){
+                    } else if (rf.isForbidden(e)){
                         iter = edgesNotRF.erase(iter);
                         forbiddenCount++;
                     } else {
@@ -201,91 +207,52 @@ namespace TSP{
                     }
                 }
             
-                if (edgesNotRF.size() < 2) throw std::runtime_error("An edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
-
+                if (edgesNotRF.size() < 2){
+                    auto thing = graph.getEdges(rf);
+                    throw std::runtime_error("An edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
+                }
+                
 
                 iter = edgesNotRF.begin();
-                //add to q 3 new nodes
-                Edge e = *iter;
-                //TODO: is this what is meant by "two distinct edges in T incident to i that we have not yet branched on"?
-                //repeat until we have an unseen edge
-                while(seenEdges[e.a()][e.b()]){
-                    if(iter == edgesNotRF.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
-                    iter++;
-                    e = *iter;
-                }
-                seenEdges[e.a()][e.b()] = true;
                 Edge e1 = *iter;
-                //repeat until we have an unseen edge
-                while(seenEdges[e.a()][e.b()]){
-                    if(iter == edgesNotRF.end()) throw std::runtime_error("No unseen edge in connected edges, something is wrong?");
-                    iter++;
-                    e = *iter;
-                }
-                Edge e2 = *iter;
-                auto R_e1 = required;
-                R_e1.insert(e1);
-                auto R_e1_e2 = R_e1;
-                R_e1_e2.insert(e2);
-                auto F_e1 = forbidden;
-                F_e1.insert(e1);
-                auto F_e2 = forbidden;
-                F_e2.insert(e2);
+                Edge e2 = *(++iter);
+                
+                if(iter != edgesNotRF.end()){
+                    RFList rf1 = rf;
+                    RFList rf2 = rf;
+                    RFList rf3 = rf;
 
-                if(forbiddenCount + 1 == numVertices - 3){
-                    //require all remaining edges
-                    for(Edge e : modified.getConnectedEdges(i)){
-                        if(F_e1.count(e) == 0){
-                            required.insert(e);
+                    rf1.forbid(e1);
+                    std::vector<int> lambda1 = HK(graph, lambda, t_0, rf1);
+                    Graph modified1 (graph, lambda1);
+                    Tree t1 (modified1, rf1);
+                    int cost1 = getCost(t1, lambda1);
+                    if(cost1 < upperLimit){
+                        Q.push(rf1, cost1, lambda1);
+                    }
+                    
+                    rf2.require(e1);
+                    rf2.forbid(e2);
+                    std::vector<int> lambda2 = HK(graph, lambda, t_0, rf2);
+                    Graph modified2 (graph, lambda2);
+                    Tree t2 (modified2, rf2);
+                    int cost2 = getCost(t2, lambda2);
+                    if(cost2 < upperLimit){
+                        Q.push(rf2, cost2, lambda2);
+                    }
+                    
+                    if(requiredCount == 0){
+                        rf3.require(e1);
+                        rf3.require(e2);
+                        std::vector<int> lambda3 = HK(graph, lambda, t_0, rf3);
+                        Graph modified3 (graph, lambda3);
+                        Tree t3 (modified3, rf3);
+                        int cost3 = getCost(t3, lambda3);
+                        if(cost3 < upperLimit){
+                            Q.push(rf3, cost3, lambda3);
                         }
-                    }
-                }
-                std::vector<int> lambda1 = HK(graph, lambda, t_0, required, F_e1);
-                Graph modified1 (graph, lambda1);
-                Tree t1 (modified1, required, F_e1);
-                int cost1 = getCost(t1, lambda1);
-                if(cost1 < upperLimit){
-                    Q.push(required, F_e1,cost1, lambda1);
-                }
-                
-                if(requiredCount == 1){
-                    for(Edge e : modified.getConnectedEdges(i)){
-                        if(R_e1.count(e) == 0){
-                            F_e2.insert(e);
-                        }
-                    }
-                }else if(forbiddenCount + 1 == numVertices - 3){
-                    //require all remaining edges
-                    for(Edge e : modified.getConnectedEdges(i)){
-                        //forbid if not in F_e1
-                        if(F_e2.count(e) == 0){
-                            R_e1.insert(e);
-                        }
-                    }
-                }
-                std::vector<int> lambda2 = HK(graph, lambda, t_0, R_e1, F_e2);
-                Graph modified2 (graph, lambda2);
-                Tree t2 (modified2, R_e1, F_e2);
-                int cost2 = getCost(t2, lambda2);
-                if(cost2 < upperLimit){
-                    Q.push(R_e1, F_e2, cost2, lambda2);
-                }
-                
-                if(requiredCount == 0){
-                    for(Edge e : modified.getConnectedEdges(i)){
-                        //add to F if not in R
-                        if(e1 != e && e2 != e){
-                            forbidden.insert(e);
-                        }
-                    }
-                    std::vector<int> lambda3 = HK(graph, lambda, t_0, R_e1_e2, forbidden);
-                    Graph modified3 (graph, lambda3);
-                    Tree t3 (modified3, R_e1_e2, forbidden);
-                    int cost3 = getCost(t3, lambda3);
-                    if(cost3 < upperLimit){
-                        Q.push(R_e1_e2, forbidden, cost3, lambda3);
-                    }
-                }          
+                    }  
+                }        
             }
         }
         if(upperLimit == std::numeric_limits<int>::max()) throw std::runtime_error("No tour found");

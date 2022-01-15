@@ -103,22 +103,28 @@ namespace TSP {
         _edges[node2_id][node1_id] = weight;
    }
 
-   int Graph::getEdgeWeight(NodeId const node1_id, NodeId const node2_id) const{
+    int Graph::getEdgeWeight(NodeId const node1_id, NodeId const node2_id) const{
         if(node1_id == node2_id)
             throw std::runtime_error("Cannot get edge weight for self-loops.");
         if(node1_id > _edges.size() || node2_id > _edges.size())
             throw std::runtime_error("Node id out of bounds.");
         return _edges[node1_id][node2_id];
-   }
-   
-   size_t Graph::getNumVertices() const{
+    }
+
+    size_t Graph::getNumVertices() const{
         return _numVertices;
-   }
-   size_t Graph::getNumEdges() const{
+    }
+    size_t Graph::getNumEdges() const{
         return _numVertices * (_numVertices - 1) / 2;
-   }
-   
-    std::vector<WeightedEdge> Graph::getEdges (std::set<Edge> required, std::set<Edge> forbidden) const {
+    }
+
+    /**
+     * @brief Returns a list of edges connected to the vertex, with modifications s.t. required edges have
+     *  minimum edge weight and forbidden edges have maximum edge weight.
+     * @param node_id The id of the node.
+     * @return a vector of edges connected to the vertex.
+     */
+    std::vector<WeightedEdge> Graph::getEdges (const RFList & rf) const {
         std::vector<WeightedEdge> edges;
         //edges.reserve(getNumEdges());
         for(NodeId i = 0; i < _numVertices; i++){
@@ -130,26 +136,13 @@ namespace TSP {
         }
 
         for(auto & edge : edges){
-            if(required.count(edge) != 0){
+            if(rf.isRequired(edge)){
                 edge.setWeight(std::numeric_limits<int>::min());
-            } else if (forbidden.count(edge) != 0){
+            } else if (rf.isForbidden(edge)){
                 edge.setWeight(std::numeric_limits<int>::max());
             }
         }
-        //setEdgeWeights for required and forbidden to min and max int
-        /*for(Edge edge: forbidden){            
-            int position = getPosition(edge.a(), edge.b());
-            edges[position].setWeight(std::numeric_limits<int>::max());
-        }
-        auto edge = edges[getPosition(12,51)];
-        std::cout << "a: " << edge.a() << " b: " << edge.b() << " weight: " << edge.getWeight() << "\n";
-        for(Edge edge: required){            
-            int position = getPosition(edge.a(), edge.b());
-            edges[position].setWeight(std::numeric_limits<int>::min());
-        }*/
-
-        //for now can use std::sort, but to get the runtime better, we can use radix sort
-        //sort by weight
+    
         std::sort(edges.begin(), edges.end(),
                 [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
             return lhs.getWeight() < rhs.getWeight();

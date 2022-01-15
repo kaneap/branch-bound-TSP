@@ -7,20 +7,22 @@ namespace TSP
         _numVertices = 0;
     }
 
-    Tree::Tree(const Graph & graph): Tree(graph, std::set<Edge>(), std::set<Edge>()){}
+    Tree::Tree(const Graph & graph): 
+            Tree(graph, RFList(graph.getNumVertices())){}
 
     Tree::Tree(const Graph & graph, std::vector<int> lambda){
-        Tree(graph, lambda, std::set<Edge>(), std::set<Edge>());
+        RFList rf(graph.getNumVertices());
+        Tree(graph, lambda, rf);
     }
 
-    Tree::Tree(const Graph & graph, std::vector<int> lambda, std::set<Edge> required, std::set<Edge> forbidden){
+    Tree::Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf){
         Graph modified(graph, lambda);
-        Tree(modified, required, forbidden);
+        Tree(modified, rf);
     }
 
 
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
-    Tree::Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden):
+    Tree::Tree(const Graph & graph, const RFList & rf):
     _edges(),
     _vertexDegrees(graph.getNumVertices())
     {
@@ -40,7 +42,7 @@ namespace TSP
             //    continue; //we exclude the 1 in the 1-tree
             vertexSets.push_back(Union::makeSet(i));
         }
-        auto allEdges = graph.getEdges(required, forbidden);
+        auto allEdges = graph.getEdges(rf);
 
         unsigned count = 0;
         for (auto & e : allEdges)
@@ -49,19 +51,25 @@ namespace TSP
                 NodeId u = e.a();
                 NodeId v = e.b();
                 if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
-                    if (u != one && v != one)
-                    {
-                        edges.push_back(e);
-                        Union::makeUnion(vertexSets[u], vertexSets[v]);
-                        count++;
+                    if (u == one || v == one) continue;
+                    if(e.getWeight() == std::numeric_limits<int>::max()){
+                        throw std::runtime_error("Forbidden edge in tree");
                     }
+                    //make new weighted edge so we evalutate wrt the original edge weights
+                    edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
+                    Union::makeUnion(vertexSets[u], vertexSets[v]);
+                    count++;
+                    
                 }
             }
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
         auto oneEdges = graph.getConnectedEdges(one);
-
+        std::sort(oneEdges.begin(), oneEdges.end(),
+                [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
+            return lhs.getWeight() < rhs.getWeight();
+        });
         WeightedEdge first = oneEdges[0];
         WeightedEdge second = oneEdges[1];
         for(unsigned i = 2; i < oneEdges.size(); i++){

@@ -2,6 +2,8 @@
 
 namespace TSP {
     Edge::Edge(NodeId a, NodeId b) {
+        if(a == b)
+            throw std::invalid_argument("Edge::Edge(NodeId a, NodeId b): a == b");
         // a is always smaller than b
         if(a < b){
             _a = a;

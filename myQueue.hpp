@@ -5,19 +5,19 @@
 #include <queue>
 #include <set>
 #include "edge.hpp"
+#include "rfList.hpp"
 
 namespace TSP {
 
     class QueueElement {
-        std::set<Edge> required;
-        std::set<Edge> forbidden;
-        std::vector<int> lambda;
+        private:
+        RFList rf;
         int cost;
+        std::vector<int> lambda;
         public:
-        QueueElement(std::set<Edge> required, std::set<Edge> forbidden, int cost, std::vector<int> lambda);
+        QueueElement(RFList rf, int cost, std::vector<int> lambda);
         bool operator< (const QueueElement& rhs) const;
-        std::set<Edge> getRequired();
-        std::set<Edge> getForbidden();
+        RFList getRF();
         std::vector<int> getLambda();
         int getCost();
 
@@ -30,7 +30,7 @@ namespace TSP {
 
     public:
         size_t size();
-        void push(std::set<Edge> required, std::set<Edge> forbidden, int cost, std::vector<int> lambda);
+        void push(RFList rf, int cost, std::vector<int> lambda);
         void push(const QueueElement& e);
         QueueElement pop();
     };

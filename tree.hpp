@@ -8,6 +8,7 @@
 #include "graph.hpp"
 #include "union.hpp"
 #include "edge.hpp"
+#include "rfList.hpp"
 
 namespace TSP {
     class Tree {
@@ -18,9 +19,9 @@ namespace TSP {
     public:
         Tree();
         Tree(const Graph & graph);
-        Tree(const Graph & graph, std::set<Edge> required, std::set<Edge> forbidden);
+        Tree(const Graph & graph, const RFList & rf);
         Tree(const Graph & graph, std::vector<int> lambda);
-        Tree(const Graph & graph, std::vector<int> lambda, std::set<Edge> required, std::set<Edge> forbidden);
+        Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf);
         bool is2Regular() const;
         std::vector<NodeId> getTour();
         std::string toTsplibString();

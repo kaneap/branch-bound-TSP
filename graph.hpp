@@ -13,8 +13,10 @@
 #include <fstream>
 #include <cmath>
 #include <set>
+#include <vector>
 #include "nodeId.hpp"
 #include "weightedEdge.hpp"
+#include "rfList.hpp"
 
 namespace TSP {
 
@@ -71,7 +73,7 @@ namespace TSP {
       size_type getNumVertices() const;
       size_type getNumEdges() const;
       // todo: this vector pair pair thing is ugly... probably should be an object...
-      std::vector<WeightedEdge> getEdges (std::set<Edge> required, std::set<Edge> forbidden) const;
+      std::vector<WeightedEdge> getEdges (const RFList & rf) const;
       std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
       std::vector<std::vector<int>> updatedEdgeCosts(std::vector<int> lambda) const ;
 
