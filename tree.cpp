@@ -83,9 +83,9 @@ namespace TSP
                 second = current;
             } 
         }
-        //todo: sort this
-        edges.push_back(first);
-        edges.push_back(second);
+
+        edges.push_back(WeightedEdge(first.a(), first.b(), graph.getEdgeWeight(first.a(), first.b())));
+        edges.push_back(WeightedEdge(second.a(), second.b(), graph.getEdgeWeight(second.a(), second.b())));
         _edges = edges;
 
         for (auto e : _edges)

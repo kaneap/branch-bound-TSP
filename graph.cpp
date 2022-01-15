@@ -63,7 +63,6 @@ namespace TSP {
                             getline(ss, token, ' ');
                         }
                         ycoordinates.push_back(std::stoi(token));
-                        std::cout << token << "\n";
                         //double distance = sqrt(x*x+y*y);
                     }catch(const std::invalid_argument& ia){
                         std::cout<< line;
