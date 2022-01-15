@@ -134,8 +134,8 @@ namespace TSP{
 
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
-        Tree tree(Graph(graph, lambda));
-        int cost = getCost(tree, lambda);
+        Tree rootTree(Graph(graph, lambda));
+        int cost = getCost(rootTree, lambda);
         Q.push(std::set<Edge>(), std::set<Edge>(), cost, lambda);
 
         int upperLimit = std::numeric_limits<int>::max();
@@ -181,31 +181,30 @@ namespace TSP{
                 auto connectedEdges = t.getConnectedEdges(i);
                 //the connected edges not in R or F
                 auto edgesNotRF = connectedEdges;
-                int requiredCount, forbiddenCount = 0;
+                unsigned int requiredCount = 0;
+                unsigned int forbiddenCount = 0;
 
                 //remove R and F from connected edges
-                for (auto iter = connectedEdges.begin(), end=connectedEdges.end(); iter != end; iter++) {
+                auto iter = edgesNotRF.begin();
+                while (iter != edgesNotRF.end()){
                     auto e = *iter;
                     //TODO: may need to optimize this. Required and forbidden could be n*n matrices,
                     //but the real performance of the hash map is probably fine.
                     if(required.count(e) != 0){
-                        edgesNotRF.erase(iter);
+                        iter = edgesNotRF.erase(iter);
                         requiredCount++;
                     } else if (forbidden.count(e) != 0){
-                        edgesNotRF.erase(iter);
+                        iter = edgesNotRF.erase(iter);
                         forbiddenCount++;
+                    } else {
+                        iter++;
                     }
                 }
             
                 if (edgesNotRF.size() < 2) throw std::runtime_error("An edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
 
-                //calculate the number of required edges incident to e
-                int incidentRequired = 0;
-                for(Edge e : required){
-                    if(e.connectsVertex(i)) incidentRequired++;
-                }
 
-                auto iter = edgesNotRF.begin();
+                iter = edgesNotRF.begin();
                 //add to q 3 new nodes
                 Edge e = *iter;
                 //TODO: is this what is meant by "two distinct edges in T incident to i that we have not yet branched on"?
@@ -235,8 +234,8 @@ namespace TSP{
 
                 if(forbiddenCount + 1 == numVertices - 3){
                     //require all remaining edges
-                    for(Edge e : edgesNotRF){
-                        if(e1 != e){
+                    for(Edge e : modified.getConnectedEdges(i)){
+                        if(F_e1.count(e) == 0){
                             required.insert(e);
                         }
                     }
@@ -250,16 +249,16 @@ namespace TSP{
                 }
                 
                 if(requiredCount == 1){
-                    for(Edge e : edgesNotRF){
-                        if(e1 != e){
+                    for(Edge e : modified.getConnectedEdges(i)){
+                        if(R_e1.count(e) == 0){
                             F_e2.insert(e);
                         }
                     }
-                }
-                if(forbiddenCount + 1 == numVertices - 3){
+                }else if(forbiddenCount + 1 == numVertices - 3){
                     //require all remaining edges
-                    for(Edge e : edgesNotRF){
-                        if(e1 != e && e2 != e){
+                    for(Edge e : modified.getConnectedEdges(i)){
+                        //forbid if not in F_e1
+                        if(F_e2.count(e) == 0){
                             R_e1.insert(e);
                         }
                     }
@@ -273,7 +272,8 @@ namespace TSP{
                 }
                 
                 if(requiredCount == 0){
-                    for(Edge e : edgesNotRF){
+                    for(Edge e : modified.getConnectedEdges(i)){
+                        //add to F if not in R
                         if(e1 != e && e2 != e){
                             forbidden.insert(e);
                         }

@@ -6,9 +6,6 @@ namespace TSP {
     _weight(weight)
     {}
 
-    int WeightedEdge::getWeight(){return _weight;}
+    int WeightedEdge::getWeight() const {return _weight;}
     void WeightedEdge::setWeight(int weight){_weight = weight;}
-
-
-    bool WeightedEdge::operator< (const WeightedEdge& rhs) const {return this->_weight < rhs._weight;}
 }

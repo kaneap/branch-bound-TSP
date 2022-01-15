@@ -1,0 +1,13 @@
+NAME: pentagon
+TYPE: TSP
+COMMENT: 5 points of a pentagon
+DIMENSION: 5
+EDGE_WEIGHT_TYPE: EUC_2D
+NODE_COORD_SECTION
+1 0.0 2.0
+2 0.0 7.0
+3 5.0 1.0
+4 8.0 5.0
+5 5.0 8.0
+EOF
+

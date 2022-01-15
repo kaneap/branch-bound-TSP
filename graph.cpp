@@ -101,7 +101,6 @@ namespace TSP {
             throw std::runtime_error("Edge weight was already assigned.");    
         _edges[node1_id][node2_id] = weight;
         _edges[node2_id][node1_id] = weight;
-        std::cout << "added edge " << node1_id << " - " <<node2_id <<" with weight " << weight<< "\n";
    }
 
    int Graph::getEdgeWeight(NodeId const node1_id, NodeId const node2_id) const{
@@ -123,28 +122,38 @@ namespace TSP {
         std::vector<WeightedEdge> edges;
         //edges.reserve(getNumEdges());
         for(NodeId i = 0; i < _numVertices; i++){
-            for(NodeId j = 0; j < _numVertices; j++){
-                if (i>=j) continue; //avoid double counting edges
+            for(NodeId j = i + 1; j < _numVertices; j++){
                 int weight = getEdgeWeight(i, j);
                 WeightedEdge edge (i, j, weight);
                 edges.push_back(edge);
             }
         }
 
-
+        for(auto & edge : edges){
+            if(required.count(edge) != 0){
+                edge.setWeight(std::numeric_limits<int>::min());
+            } else if (forbidden.count(edge) != 0){
+                edge.setWeight(std::numeric_limits<int>::max());
+            }
+        }
         //setEdgeWeights for required and forbidden to min and max int
-        for(Edge edge: forbidden){            
+        /*for(Edge edge: forbidden){            
             int position = getPosition(edge.a(), edge.b());
             edges[position].setWeight(std::numeric_limits<int>::max());
         }
+        auto edge = edges[getPosition(12,51)];
+        std::cout << "a: " << edge.a() << " b: " << edge.b() << " weight: " << edge.getWeight() << "\n";
         for(Edge edge: required){            
             int position = getPosition(edge.a(), edge.b());
             edges[position].setWeight(std::numeric_limits<int>::min());
-        }
+        }*/
 
-        //todo: should we cache this?
         //for now can use std::sort, but to get the runtime better, we can use radix sort
-        std::sort(edges.begin(), edges.end());
+        //sort by weight
+        std::sort(edges.begin(), edges.end(),
+                [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
+            return lhs.getWeight() < rhs.getWeight();
+        });
         return edges;
     }
 
@@ -162,6 +171,7 @@ namespace TSP {
         return updated;
     }
 
+    //TODO: this is wrong
     int Graph::getPosition(NodeId a, NodeId b) const{
         return a+ (b-1)*b/2;
     }

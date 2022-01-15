@@ -43,7 +43,7 @@ namespace TSP
         auto allEdges = graph.getEdges(required, forbidden);
 
         unsigned count = 0;
-        for (auto e : allEdges)
+        for (auto & e : allEdges)
         {
             if (count < graph.getNumVertices()-1){
                 NodeId u = e.a();
@@ -128,7 +128,7 @@ namespace TSP
         ss << "DIMENSION : " << numEdges << std::endl;
         ss <<"TOUR SECTION" << std::endl;
         for (auto v : this->getTour()){
-            ss << v << std::endl;
+            ss << v+1 << std::endl;
         }
         ss << "-1" << std::endl << "EOF";
       return ss.str();
@@ -154,7 +154,6 @@ namespace TSP
         for(WeightedEdge e : _edges){
             if(e.connectsVertex(v)) connected.insert(e);
         }
-        //TODO: should I return reference?
         return connected;
     }
 
