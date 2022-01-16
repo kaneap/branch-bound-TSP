@@ -43,45 +43,40 @@ namespace TSP
             vertexSets.push_back(Union::makeSet(i));
         }
         auto allEdges = graph.getEdges(rf);
+        std::vector<WeightedEdge> oneEdges;
 
         unsigned count = 0;
         for (auto & e : allEdges)
         {
-            if (count < graph.getNumVertices()-1){
-                NodeId u = e.a();
-                NodeId v = e.b();
-                if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
-                    if (u == one || v == one) continue;
-                    if(e.getWeight() == std::numeric_limits<int>::max()){
-                        throw std::runtime_error("Forbidden edge in tree");
-                    }
-                    //make new weighted edge so we evalutate wrt the original edge weights
-                    edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
-                    Union::makeUnion(vertexSets[u], vertexSets[v]);
-                    count++;
-                    
+            if (count >= graph.getNumVertices()-1) break;
+            NodeId u = e.a();
+            NodeId v = e.b();
+            if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
+                if (u == one || v == one){
+                    oneEdges.push_back(e);
+                    continue;
                 }
+                if(e.getWeight() == std::numeric_limits<int>::max()){
+                    throw std::runtime_error("Forbidden edge in tree");
+                }
+                //make new weighted edge so we evalutate wrt the original edge weights
+                edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
+                Union::makeUnion(vertexSets[u], vertexSets[v]);
+                count++;
+                
             }
+            
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
-        auto oneEdges = graph.getConnectedEdges(one);
         std::sort(oneEdges.begin(), oneEdges.end(),
                 [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
             return lhs.getWeight() < rhs.getWeight();
         });
         WeightedEdge first = oneEdges[0];
         WeightedEdge second = oneEdges[1];
-        for(unsigned i = 2; i < oneEdges.size(); i++){
-            WeightedEdge current = oneEdges[i];
-            if (current < first)
-            {
-                second = first;
-                first = current;
-            }else if (current < second)
-            {
-                second = current;
-            } 
+        if(first.getWeight() == std::numeric_limits<int>::max() || second.getWeight() == std::numeric_limits<int>::max()){
+            throw std::runtime_error("Forbidden edge in tree");
         }
 
         edges.push_back(WeightedEdge(first.a(), first.b(), graph.getEdgeWeight(first.a(), first.b())));

@@ -55,7 +55,7 @@ namespace TSP {
         _f[b][a] = true;
         _fCnt[a]++;
         _fCnt[b]++;
-        if(_fCnt[a] == _f.size() - 2){
+        if(_fCnt[a] == _f.size() - 3){
             //require the last two edges
             for(unsigned int i = 0; i < _f.size(); i++){
                 if(!_f[a][i] && a != i){
@@ -63,7 +63,7 @@ namespace TSP {
                 }
             }
         }
-        if(_fCnt[b] == _f.size() - 2){
+        if(_fCnt[b] == _f.size() - 3){
             //require the last two edges
             for(unsigned int i = 0; i < _f.size(); i++){
                 if(!_f[b][i] && b != i){
@@ -79,6 +79,15 @@ namespace TSP {
 
     bool RFList::isForbidden(Edge e) const {
         return _f[e.a()][e.b()];
+    }
+
+    bool RFList::is2Regular() const {
+        for(unsigned int i = 0; i < _r.size(); i++){
+            if(_rCnt[i] != 2){
+                return false;
+            }
+        }
+        return true;
     }
 
 }

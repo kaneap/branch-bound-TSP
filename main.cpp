@@ -30,6 +30,7 @@ namespace TSP{
         for(unsigned int i = 0; i < tree.getNumVertices(); i++){
             degeeSum += ((tree.getDegree(i) - 2) * lambda[i]);
         }
+        //TODO: shoulde we evaluate wrt the original costs?
         return tree.getTourCost() + degeeSum;
     }
 
@@ -152,13 +153,11 @@ namespace TSP{
 
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
-            //TODO: there are more optimal ways to select the next node. See page 3 of the assignment.
             auto elem = Q.pop();
             auto rf = elem.getRF();
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
             lambda = elem.getLambda();
-            //lambda = HK(graph, lambda, t_0, required, forbidden);
             Graph modified (graph, lambda);
             Tree t (modified, rf);
             //cost = getCost(t, lambda);
@@ -208,7 +207,7 @@ namespace TSP{
                 }
             
                 if (edgesNotRF.size() < 2){
-                    auto thing = graph.getEdges(rf);
+                    Tree test (modified, rf);
                     throw std::runtime_error("An edge has |δ_T (i) \\ (R ∪ F)| ≥ 2, something is wrong...");
                 }
                 
@@ -226,16 +225,21 @@ namespace TSP{
                     std::vector<int> lambda1 = HK(graph, lambda, t_0, rf1);
                     Graph modified1 (graph, lambda1);
                     Tree t1 (modified1, rf1);
+                    if(t1.is2Regular())
+                        std::cout << t1.toTsplibString() << std::endl;
                     int cost1 = getCost(t1, lambda1);
                     if(cost1 < upperLimit){
                         Q.push(rf1, cost1, lambda1);
                     }
                     
                     rf2.require(e1);
-                    rf2.forbid(e2);
+                    if(!rf2.is2Regular())
+                        rf2.forbid(e2);
                     std::vector<int> lambda2 = HK(graph, lambda, t_0, rf2);
                     Graph modified2 (graph, lambda2);
                     Tree t2 (modified2, rf2);
+                    if(t2.is2Regular())
+                        std::cout << t2.toTsplibString() << std::endl;
                     int cost2 = getCost(t2, lambda2);
                     if(cost2 < upperLimit){
                         Q.push(rf2, cost2, lambda2);
@@ -243,10 +247,13 @@ namespace TSP{
                     
                     if(requiredCount == 0){
                         rf3.require(e1);
+                        if(rf3.is2Regular()) continue;
                         rf3.require(e2);
                         std::vector<int> lambda3 = HK(graph, lambda, t_0, rf3);
                         Graph modified3 (graph, lambda3);
                         Tree t3 (modified3, rf3);
+                        if(t3.is2Regular())
+                            std::cout << t3.toTsplibString() << std::endl;
                         int cost3 = getCost(t3, lambda3);
                         if(cost3 < upperLimit){
                             Q.push(rf3, cost3, lambda3);
