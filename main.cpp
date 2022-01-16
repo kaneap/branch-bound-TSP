@@ -25,13 +25,13 @@ namespace TSP{
      * @param Tree
      * @return lambda
      */
-    int getCost(const Tree & tree, std::vector<int> & lambda){
+    int getCost(const Tree & tree, std::vector<int> & lambda, const Graph & graph){
         int degeeSum = 0;
         for(unsigned int i = 0; i < tree.getNumVertices(); i++){
             degeeSum += ((tree.getDegree(i) - 2) * lambda[i]);
         }
         //TODO: shoulde we evaluate wrt the original costs?
-        return tree.getTourCost() + degeeSum;
+        return tree.getTourCost(graph) + degeeSum;
     }
 
         /**
@@ -58,7 +58,7 @@ namespace TSP{
      * @param lambda 
      * @return int 
      */
-    std::vector<int> findNextLambdaVJ(const Tree & tree, const Tree & lastTree, std::vector<int> lambda, float t_i){
+    std::vector<int> findNextLambdaVJ(const Tree & tree, const Tree & lastTree, const std::vector<int> & lambda, float t_i){
         if(tree.getNumVertices() != lambda.size() || lastTree.getNumVertices() != lambda.size())
             throw std::runtime_error("Graph and lambda must have the same number of vertices.");
         std::vector<int> nextLambda (tree.getNumVertices());
@@ -111,7 +111,7 @@ namespace TSP{
         int N = ceil((n*n) / 50) + n + 15;
         Tree* tree = new Tree(graph);
         Tree* lastTree = nullptr;
-        float t = tree->getTourCost() / (2.0 * n);
+        float t = tree->getTourCost(graph) / (2.0 * n);
         delete tree;
         tree = nullptr;
         float delta = (3 * t) / (2 * N);
@@ -141,15 +141,13 @@ namespace TSP{
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
         std::vector<int> lambda = HK_root(graph);
         Tree rootTree(Graph(graph, lambda));
-        int cost = getCost(rootTree, lambda);
-        Q.push(RFList(numVertices), 
-            cost, 
-            lambda);
+        int rootCost = getCost(rootTree, lambda, graph);
+        Q.push(RFList(numVertices), rootCost, lambda);
 
         int upperLimit = std::numeric_limits<int>::max();
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
-        float t_0 = accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
+        float t_0 = std::accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
 
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
@@ -160,13 +158,14 @@ namespace TSP{
             lambda = elem.getLambda();
             Graph modified (graph, lambda);
             Tree t (modified, rf);
+            int cost = elem.getCost();
             //cost = getCost(t, lambda);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
                 //maybe we should do this step already before adding to Q (according to the assignment)
                 if(cost < upperLimit){
                     //we check if this tour is better than the best tour we have seen so far
-                   upperLimit = t.getTourCost();
+                   upperLimit = t.getTourCost(graph);
                    shortestTour = t;
                 }
             }else{
@@ -193,8 +192,6 @@ namespace TSP{
                 auto iter = edgesNotRF.begin();
                 while (iter != edgesNotRF.end()){
                     auto e = *iter;
-                    //TODO: may need to optimize this. Required and forbidden could be n*n matrices,
-                    //but the real performance of the hash map is probably fine.
                     if(rf.isRequired(e)){
                         iter = edgesNotRF.erase(iter);
                         requiredCount++;
@@ -225,10 +222,8 @@ namespace TSP{
                     std::vector<int> lambda1 = HK(graph, lambda, t_0, rf1);
                     Graph modified1 (graph, lambda1);
                     Tree t1 (modified1, rf1);
-                    if(t1.is2Regular())
-                        std::cout << t1.toTsplibString() << std::endl;
-                    int cost1 = getCost(t1, lambda1);
-                    if(cost1 < upperLimit){
+                    int cost1 = getCost(t1, lambda1, graph);
+                    if(cost1 < upperLimit && !t1.isIllegal()){
                         Q.push(rf1, cost1, lambda1);
                     }
                     
@@ -238,10 +233,8 @@ namespace TSP{
                     std::vector<int> lambda2 = HK(graph, lambda, t_0, rf2);
                     Graph modified2 (graph, lambda2);
                     Tree t2 (modified2, rf2);
-                    if(t2.is2Regular())
-                        std::cout << t2.toTsplibString() << std::endl;
-                    int cost2 = getCost(t2, lambda2);
-                    if(cost2 < upperLimit){
+                    int cost2 = getCost(t2, lambda2, graph);
+                    if(cost2 < upperLimit && !t2.isIllegal()){
                         Q.push(rf2, cost2, lambda2);
                     }
                     
@@ -252,10 +245,8 @@ namespace TSP{
                         std::vector<int> lambda3 = HK(graph, lambda, t_0, rf3);
                         Graph modified3 (graph, lambda3);
                         Tree t3 (modified3, rf3);
-                        if(t3.is2Regular())
-                            std::cout << t3.toTsplibString() << std::endl;
-                        int cost3 = getCost(t3, lambda3);
-                        if(cost3 < upperLimit){
+                        int cost3 = getCost(t3, lambda3, graph);
+                        if(cost3 < upperLimit && !t3.isIllegal()){
                             Q.push(rf3, cost3, lambda3);
                         }
                     }  
@@ -276,6 +267,7 @@ int main(int argc, char*argv[]){
     std::string filename (argv[1]);
     TSP::Graph g(filename);
     TSP::Tree t = TSP::branchAndBound(g);
+    std::cout << "Cost: " << t.getTourCost(g) << std::endl;
     std::cout << t.toTsplibString() << std::endl;
     return 0;
 }

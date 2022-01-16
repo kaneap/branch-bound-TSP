@@ -16,6 +16,7 @@ namespace TSP {
         std::vector<WeightedEdge> _edges;
         std::vector<int> _vertexDegrees;
         size_t _numVertices;
+        bool _illegal;
     public:
         Tree();
         Tree(const Graph & graph);
@@ -27,8 +28,10 @@ namespace TSP {
         std::string toTsplibString();
         int getDegree(NodeId v) const;
         int getTourCost() const;
+        int getTourCost(const Graph & graph) const;
         size_t getNumVertices() const;
         std::set<WeightedEdge> getConnectedEdges (NodeId v);
+        bool isIllegal() const;
     };
 }
 
