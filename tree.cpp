@@ -74,11 +74,11 @@ namespace TSP
         WeightedEdge second = oneEdges[1];
         for(unsigned i = 2; i < oneEdges.size(); i++){
             WeightedEdge current = oneEdges[i];
-            if (current < first)
+            if (current.getWeight() < first.getWeight())
             {
                 second = first;
                 first = current;
-            }else if (current < second)
+            }else if (current.getWeight() < second.getWeight())
             {
                 second = current;
             } 
