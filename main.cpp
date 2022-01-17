@@ -170,19 +170,29 @@ namespace TSP{
                 }
             }else{
                 //there needs to be a vertex 2 ≤ i ≤ n with degree > 2.
-                NodeId i = invalid_node_id;
+                std::vector<NodeId> candidates;
                 //TODO: should looking for this vetex be randomized perhaps?
                 for(NodeId v = 0; v < numVertices; v++){
                     int degree = t.getDegree(v);
                     if (degree > 2){
-                        i = v;
-                        break;
+                        candidates.push_back(v);
                     }
                 }
-                if(i == invalid_node_id) throw std::runtime_error("No edge has degree > 2 in the tree... something is wrong...");
+                if(candidates.empty()) throw std::runtime_error("No edge has degree > 2 in the tree... something is wrong...");
+
+                NodeId bestCandidate = invalid_node_id;
+                unsigned int feasibleEdges = std::numeric_limits<unsigned int>::max();
+                for(NodeId i: candidates){
+                    if(feasibleEdges > graph.getNumVertices() - 1 - rf.numRequired(i) - rf.numForbidden(i)){
+                        feasibleEdges = graph.getNumVertices() -1  - rf.numRequired(i) - rf.numForbidden(i);
+                        bestCandidate = i;
+                    }
+                }
+
+                if(bestCandidate = invalid_node_id) throw std::runtime_error("Something went wrong no candidate has feasible edges");
 
 
-                auto connectedEdges = t.getConnectedEdges(i);
+                auto connectedEdges = t.getConnectedEdges(bestCandidate);
                 //the connected edges not in R or F
                 auto edgesNotRF = connectedEdges;
                 unsigned int requiredCount = 0;
