@@ -68,6 +68,18 @@ namespace TSP
         });
         WeightedEdge first = oneEdges[0];
         WeightedEdge second = oneEdges[1];
+        for(unsigned i = 2; i < oneEdges.size(); i++){
+            WeightedEdge current = oneEdges[i];
+            if (current.getWeight() < first.getWeight())
+            {
+                second = first;
+                first = current;
+            }else if (current.getWeight() < second.getWeight())
+            {
+                second = current;
+            } 
+        }
+
         if(first.getWeight() == std::numeric_limits<int>::max() || second.getWeight() == std::numeric_limits<int>::max()){
             _illegal = true;
         }
