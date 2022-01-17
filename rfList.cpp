@@ -5,16 +5,19 @@ namespace TSP {
             : _r(std::vector<std::vector<bool>>(numVertices, std::vector<bool>(numVertices, false))),
               _f(std::vector<std::vector<bool>>(numVertices, std::vector<bool>(numVertices, false))),
               _rCnt(std::vector<unsigned int>(numVertices, 0)),
-              _fCnt(std::vector<unsigned int>(numVertices, 0)) {}
+              _fCnt(std::vector<unsigned int>(numVertices, 0)),
+              _isValid(true) {}
 
     void RFList::require(Edge e) {
         if(_f[e.a()][e.b()]){
-            throw std::runtime_error("Edge already forbidden.");
+            _isValid = false;
+            return;
         }
         if(_r[e.a()][e.b()])
             return;
         if(_rCnt[e.a()] > 1 || _rCnt[e.b()] > 1){
-            throw std::runtime_error("Cannot require more than two edges from a vertex.");
+            _isValid = false;
+            return;
         }
         auto a = e.a();
         auto b = e.b();
@@ -42,12 +45,14 @@ namespace TSP {
 
     void RFList::forbid(Edge e) {
         if(isRequired(e)){
-            throw std::runtime_error("Edge already required.");
+            _isValid = false;
+            return;
         }
         if(isForbidden(e))
             return;
         if(_fCnt[e.a()] > _f.size() - 2 || _fCnt[e.b()] > _f.size() - 2){
-            throw std::runtime_error("Too many forbidden edges.");
+            _isValid = false;
+            return;
         }
         auto a = e.a();
         auto b = e.b();
@@ -88,6 +93,18 @@ namespace TSP {
             }
         }
         return true;
+    }
+
+    bool RFList::isValid() const {
+        return _isValid;
+    }
+
+    unsigned int RFList::numRequired(NodeId v) const {
+        return _rCnt[v];
+    }
+
+    unsigned int RFList::numForbidden(NodeId v) const {
+        return _fCnt[v];
     }
 
 }

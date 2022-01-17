@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceFolder}/main",
-            "args": ["./given_instances/test1.tsp"],
+            "args": ["./given_instances/berlin25.tsp"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],

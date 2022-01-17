@@ -148,9 +148,13 @@ namespace TSP{
         //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
         float t_0 = std::accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
-
+        int count = 0;
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
+            if(count % 1 == 0){
+                std::cout << "Q size: " << Q.size() << std::endl;
+            }
+            count++;
             auto elem = Q.pop();
             auto rf = elem.getRF();
 
@@ -223,7 +227,7 @@ namespace TSP{
                     Graph modified1 (graph, lambda1);
                     Tree t1 (modified1, rf1);
                     int cost1 = getCost(t1, lambda1, graph);
-                    if(cost1 < upperLimit && !t1.isIllegal()){
+                    if(cost1 < upperLimit && rf1.isValid() && !t1.isIllegal()){
                         Q.push(rf1, cost1, lambda1);
                     }
                     
@@ -234,7 +238,7 @@ namespace TSP{
                     Graph modified2 (graph, lambda2);
                     Tree t2 (modified2, rf2);
                     int cost2 = getCost(t2, lambda2, graph);
-                    if(cost2 < upperLimit && !t2.isIllegal()){
+                    if(cost2 < upperLimit && rf2.isValid() && !t2.isIllegal()){
                         Q.push(rf2, cost2, lambda2);
                     }
                     
@@ -246,7 +250,7 @@ namespace TSP{
                         Graph modified3 (graph, lambda3);
                         Tree t3 (modified3, rf3);
                         int cost3 = getCost(t3, lambda3, graph);
-                        if(cost3 < upperLimit && !t3.isIllegal()){
+                        if(cost3 < upperLimit && rf3.isValid() && !t3.isIllegal()){
                             Q.push(rf3, cost3, lambda3);
                         }
                     }  
