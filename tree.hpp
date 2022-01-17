@@ -20,7 +20,6 @@ namespace TSP {
     public:
         Tree();
         Tree(int numVertices);
-        Tree(const Graph & graph);
         Tree(const Graph & graph, const RFList & rf);
         Tree(const Graph & graph, std::vector<int> lambda);
         Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf);

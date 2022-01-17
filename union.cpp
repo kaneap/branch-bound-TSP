@@ -24,16 +24,6 @@ namespace TSP{
         return n;
     }
 
-    std::vector<Element*>* Union::makeAllSets(size_t values){
-
-        //has to be free later
-        std::vector<Element*>* allSets = new std::vector<Element*>();
-        for(size_t  value = 0; value < values; value++){
-            allSets->push_back(makeSet(value));
-        }
-        return allSets;
-    }
-
 
     //find set mit Pfadkompression, gibt den Representant der Menge aus
     Element* Union::findSet(Element* x) {

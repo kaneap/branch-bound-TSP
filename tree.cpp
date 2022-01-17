@@ -4,9 +4,6 @@ namespace TSP
 {
     Tree::Tree(): _numVertices(0), _illegal(true){}
 
-    Tree::Tree(const Graph & graph): 
-            Tree(graph, RFList(graph.getNumVertices())){}
-
     Tree::Tree(const Graph & graph, std::vector<int> lambda): 
             Tree(graph, lambda, RFList(graph.getNumVertices())){}
 
@@ -19,20 +16,12 @@ namespace TSP
     _vertexDegrees(graph.getNumVertices()),
     _illegal(false)
     {
-        //DONE: require and forbid edges
-        //DONE in main: use modified weights via lambda
-
-        //TODO: does it matter what we set the 1-vertex to? Should it be random?
         NodeId one = 0;
         //first, use Kruskal's algorithm to create a minimum spanning tree
         std::vector<WeightedEdge> edges;
-        //might make sense for vertexSets to be a member of a disjoint set (union) class
         std::vector<Element *> vertexSets;
         this->_numVertices = graph.getNumVertices();
-        for (NodeId i = 0; i < graph.getNumVertices(); i++)
-        {
-            //if (i == one)
-            //    continue; //we exclude the 1 in the 1-tree
+        for (NodeId i = 0; i < graph.getNumVertices(); i++) {
             vertexSets.push_back(Union::makeSet(i));
         }
         auto allEdges = graph.getEdges(rf);
@@ -59,6 +48,11 @@ namespace TSP
                 
             }
             
+        }
+
+        //free the memory allocated by the disjoint sets
+        for(Element * e : vertexSets){
+            delete e;
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree

@@ -10,13 +10,12 @@
 #include <stack>
 #include <stdexcept>
 #include <utility>
+#include <cmath>
 #include "myQueue.hpp"
 #include "graph.hpp"
 #include "tree.hpp"
 #include "union.hpp"
 #include "edge.hpp"
-#include <math.h>
-#include <numeric>
 
 namespace TSP{
 
@@ -63,12 +62,10 @@ namespace TSP{
             throw std::runtime_error("Graph and lambda must have the same number of vertices.");
         std::vector<int> nextLambda (tree.getNumVertices());
         for(unsigned int i = 0; i < lambda.size(); i++){
-            //if we have time, might want to get rid of magic numbers
             nextLambda[i] = lambda[i] + t_i * (0.6 * (tree.getDegree(i) - 2) + 0.4 * (lastTree.getDegree(i) - 2));    
         }
         return nextLambda;
     }
-
 
 
     std::vector<int> HK(
@@ -77,26 +74,22 @@ namespace TSP{
             float t_0, 
             const RFList & rf){
         int n = graph.getNumVertices();
-        int N = ceil((n) / 4) + 5;
-        Tree* tree = nullptr;
-        Tree* lastTree = nullptr;
+        int N = ceil((n) / 4.0) + 5;
+        Tree tree;
+        Tree lastTree;
         float t = t_0;
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
-
-        Graph updated = graph;
         for(int i = 0; i < N; i++){
             lastTree = tree;
-            tree = new Tree(updated, rf);
-            lambda = lastTree == nullptr?
-                    findNextLambda(*tree, lambda, t) : 
-                    findNextLambdaVJ(*tree, *lastTree, lambda, t);
+            Graph updated (graph, lambda);
+            tree = Tree(updated, rf);
+            lambda = lastTree.isIllegal()?
+                    findNextLambda(tree, lambda, t) : 
+                    findNextLambdaVJ(tree, lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            updated = Graph(updated, lambda);
-            delete lastTree;
         }
-        delete tree;
         return lambda;
     }
 
@@ -106,29 +99,27 @@ namespace TSP{
      * @return lambda
      */
     std::vector<int> HK_root(const Graph & graph){
+        RFList rfEmpty(graph.getNumVertices());
         std::vector<int> lambda(graph.getNumVertices(), 0);
         int n = graph.getNumVertices();
-        int N = ceil((n*n) / 50) + n + 15;
-        Tree* tree = new Tree(graph);
-        Tree* lastTree = nullptr;
-        float t = tree->getTourCost(graph) / (2.0 * n);
-        delete tree;
-        tree = nullptr;
+        int N = ceil((n*n) / 50.0) + n + 15;
+        Tree tree (graph, RFList(graph.getNumVertices()));
+        Tree lastTree;
+        float t = tree.getTourCost(graph) / (2.0 * n);
+        tree = Tree();
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
         Graph updated = graph;
         for(int i = 0; i < N; i++){
             lastTree = tree;
-            tree = new Tree(updated);
-            lambda = lastTree == nullptr?
-                findNextLambda(*tree, lambda, t) : 
-                findNextLambdaVJ(*tree, *lastTree, lambda, t);
+            tree = Tree(updated, rfEmpty);
+            lambda = lastTree.isIllegal()?
+                findNextLambda(tree, lambda, t) : 
+                findNextLambdaVJ(tree, lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            updated = Graph(updated, lambda);
-            delete lastTree;
+            updated = Graph(graph, lambda);
         }
-        delete tree;
         return lambda;
     }
 
@@ -139,28 +130,34 @@ namespace TSP{
         MyQueue Q;
 
         std::vector<std::vector<bool>> seenEdges (numVertices, std::vector<bool>(numVertices, false));
-        std::vector<int> lambda = HK_root(graph);
-        Tree rootTree(Graph(graph, lambda));
-        int rootCost = getCost(rootTree, lambda, graph);
-        Q.push(RFList(numVertices), rootCost, lambda);
+        std::vector<int> rootLambda = HK_root(graph);
+        RFList rfEmpty(numVertices);
+        Tree rootTree(Graph(graph, rootLambda), rfEmpty);
+        int rootCost = getCost(rootTree, rootLambda, graph);
+        Q.push(rfEmpty, rootCost, rootLambda);
 
         Tree shortestTour;
-        shortestTour.makeTrivialTour(graph);
-        int upperLimit = shortestTour.getTourCost(graph);
-        float t_0 = std::accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
+        //shortestTour.makeTrivialTour(graph);
+        //int upperLimit = shortestTour.getTourCost(graph);
+        int upperLimit = std::numeric_limits<int>::max();
+        float t_0 = 0;
+        for(int e : rootLambda){
+            t_0 += std::abs(e);
+        }
+        t_0 /= (2.0 * numVertices);
         unsigned int max_q = 1;
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
+            std::cout << "Upper limit: " << upperLimit << std::endl;
             max_q = max_q < Q.size() ? Q.size() : max_q;
             auto elem = Q.pop();
             auto rf = elem.getRF();
 
             // Compute λ s.t. the weight of a min-c λ -cost 1-tree T with R ⊆ E(T ) ⊆ E(K n ) \ F is approximately maximum 
-            lambda = elem.getLambda();
+            std::vector<int> lambda = elem.getLambda();
             Graph modified (graph, lambda);
             Tree t (modified, rf);
             int cost = elem.getCost();
-            //cost = getCost(t, lambda);
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
                 //maybe we should do this step already before adding to Q (according to the assignment)
@@ -269,6 +266,19 @@ namespace TSP{
     }
 }
 
+/**
+ * @brief write the string to a file
+ * 
+ * @param argc 
+ * @param argv 
+ * @return int 
+ */
+void writeStringToFile(const std::string& filename, const std::string& str){
+    std::ofstream outfile;
+    outfile.open(filename);
+    outfile << str;
+    outfile.close();
+}
 
 int main(int argc, char*argv[]){
     if(argc != 2) {
