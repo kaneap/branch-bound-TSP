@@ -19,10 +19,7 @@ namespace TSP {
         bool _illegal;
     public:
         Tree();
-        Tree(int numVertices);
         Tree(const Graph & graph, const RFList & rf);
-        Tree(const Graph & graph, std::vector<int> lambda);
-        Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf);
         bool is2Regular() const;
         std::vector<NodeId> getTour() const;
         std::string toTsplibString() const;

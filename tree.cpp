@@ -4,50 +4,51 @@ namespace TSP
 {
     Tree::Tree(): _numVertices(0), _illegal(true){}
 
-    Tree::Tree(const Graph & graph, std::vector<int> lambda): 
-            Tree(graph, lambda, RFList(graph.getNumVertices())){}
-
-    Tree::Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf):
-            Tree(Graph(graph, lambda), rf){}
-
-    //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
+    /**
+     * @brief Constructs a 1-tree using Krushkal's algorithm
+     * @param graph Graph to construct tree from
+     * @param rf RFList to indicate which edges are required and forbidden
+     */
     Tree::Tree(const Graph & graph, const RFList & rf):
     _edges(),
     _vertexDegrees(graph.getNumVertices()),
     _illegal(false)
     {
+        if(!rf.isValid()) {
+            _illegal = true;
+        }
         NodeId one = 0;
         //first, use Kruskal's algorithm to create a minimum spanning tree
-        std::vector<WeightedEdge> edges;
-        std::vector<Element *> vertexSets;
+        std::vector<Element*> vertexSets;
         this->_numVertices = graph.getNumVertices();
         for (NodeId i = 0; i < graph.getNumVertices(); i++) {
             vertexSets.push_back(Union::makeSet(i));
         }
         auto allEdges = graph.getEdges(rf);
-        std::vector<WeightedEdge> oneEdges;
 
-        unsigned count = 0;
-        for (auto & e : allEdges)
-        {
-            if (count >= graph.getNumVertices()-1) break;
+        unsigned edgeCount = 0;
+        for (const auto & e : allEdges) { 
+            //want n-2 edges (i.e. to connect all except the 1-vertex)
+            if (edgeCount >= graph.getNumVertices()-2) break;
             NodeId u = e.a();
             NodeId v = e.b();
+            if(u == one || v == one) continue;
             if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
-                if (u == one || v == one){
-                    oneEdges.push_back(e);
-                    continue;
-                }
-                if(e.getWeight() == std::numeric_limits<int>::max()){
+                if(rf.isForbidden(e)){
                     _illegal = true;
                 }
                 //make new weighted edge so we evalutate wrt the original edge weights
-                edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
+                _edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
                 Union::makeUnion(vertexSets[u], vertexSets[v]);
-                count++;
-                
+                edgeCount++;
             }
-            
+        }
+
+        std::vector<WeightedEdge> oneEdges;
+        for(const auto & e : allEdges){
+            if(e.a() == one || e.b() == one){
+                oneEdges.push_back(e);
+            }
         }
 
         //free the memory allocated by the disjoint sets
@@ -58,25 +59,25 @@ namespace TSP
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
         WeightedEdge first = oneEdges[0];
         WeightedEdge second = oneEdges[1];
+        if(first.getWeight() > second.getWeight()){
+            std::swap(first, second);
+        }
         for(unsigned int i = 2; i < oneEdges.size(); i++){
             WeightedEdge current = oneEdges[i];
-            if (current.getWeight() < first.getWeight())
-            {
+            if (current.getWeight() < first.getWeight()){
                 second = first;
                 first = current;
-            }else if (current.getWeight() < second.getWeight())
-            {
+            } else if (current.getWeight() < second.getWeight()) {
                 second = current;
             } 
         }
 
-        if(first.getWeight() == std::numeric_limits<int>::max() || second.getWeight() == std::numeric_limits<int>::max()){
+        if(rf.isForbidden(first) || rf.isForbidden(second)){
             _illegal = true;
         }
 
-        edges.push_back(WeightedEdge(first.a(), first.b(), graph.getEdgeWeight(first.a(), first.b())));
-        edges.push_back(WeightedEdge(second.a(), second.b(), graph.getEdgeWeight(second.a(), second.b())));
-        _edges = edges;
+        _edges.push_back(WeightedEdge(first.a(), first.b(), graph.getEdgeWeight(first.a(), first.b())));
+        _edges.push_back(WeightedEdge(second.a(), second.b(), graph.getEdgeWeight(second.a(), second.b())));
 
         for (auto e : _edges)
         {
@@ -85,6 +86,12 @@ namespace TSP
         }
     }
 
+    /**
+     * @brief returns whether the 1-tree is 2 regular, and thus a possible solution
+     * 
+     * @return true if all the vertices have degree 2
+     * @return false 
+     */
     bool Tree::is2Regular() const
     {
         for (int degree : _vertexDegrees)

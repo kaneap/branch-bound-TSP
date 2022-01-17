@@ -78,10 +78,9 @@ namespace TSP{
         Tree tree;
         Tree lastTree;
         float t = t_0;
-        float delta = (3 * t) / (2 * N);
-        float deltaStep = t / (N*N - N);
+        float delta = (3 * t_0) / (2 * N);
+        float deltaStep = t_0 / (N*N - N);
         for(int i = 0; i < N; i++){
-            lastTree = tree;
             Graph updated (graph, lambda);
             tree = Tree(updated, rf);
             lambda = lastTree.isIllegal()?
@@ -89,6 +88,7 @@ namespace TSP{
                     findNextLambdaVJ(tree, lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
+            lastTree = tree;
         }
         return lambda;
     }
@@ -106,19 +106,17 @@ namespace TSP{
         Tree tree (graph, RFList(graph.getNumVertices()));
         Tree lastTree;
         float t = tree.getTourCost(graph) / (2.0 * n);
-        tree = Tree();
         float delta = (3 * t) / (2 * N);
         float deltaStep = t / (N*N - N);
-        Graph updated = graph;
         for(int i = 0; i < N; i++){
-            lastTree = tree;
+            Graph updated(graph, lambda);
             tree = Tree(updated, rfEmpty);
             lambda = lastTree.isIllegal()?
                 findNextLambda(tree, lambda, t) : 
                 findNextLambdaVJ(tree, lastTree, lambda, t);
             t -= delta;
             delta -= deltaStep;
-            updated = Graph(graph, lambda);
+            lastTree = tree;
         }
         return lambda;
     }
@@ -149,6 +147,7 @@ namespace TSP{
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
             std::cout << "Upper limit: " << upperLimit << std::endl;
+            std::cout << "Q size: " << Q.size() << std::endl;
             max_q = max_q < Q.size() ? Q.size() : max_q;
             auto elem = Q.pop();
             auto rf = elem.getRF();
@@ -157,12 +156,12 @@ namespace TSP{
             std::vector<int> lambda = elem.getLambda();
             Graph modified (graph, lambda);
             Tree t (modified, rf);
+            if(t.isIllegal()) continue;
             int cost = elem.getCost();
             if(t.is2Regular()) {
                 //the tree is 2 regular, so it is a tour
-                //maybe we should do this step already before adding to Q (according to the assignment)
+                //we check if this tour is better than the best tour we have seen so far
                 if(cost < upperLimit){
-                    //we check if this tour is better than the best tour we have seen so far
                    upperLimit = t.getTourCost(graph);
                    shortestTour = t;
                 }
@@ -269,8 +268,8 @@ namespace TSP{
 /**
  * @brief write the string to a file
  * 
- * @param argc 
- * @param argv 
+ * @param filename the name of the file 
+ * @param str the string to write 
  * @return int 
  */
 void writeStringToFile(const std::string& filename, const std::string& str){
@@ -281,15 +280,23 @@ void writeStringToFile(const std::string& filename, const std::string& str){
 }
 
 int main(int argc, char*argv[]){
-    if(argc != 2) {
+    if(argc < 2) {
         std::cout << "Please specify a filename of a TSPLIB format graph file!" << std::endl;
+        return 1;
+    }
+    if(argc > 3) {
+        std::cout << "Too many arguments!" << std::endl;
         return 1;
     }
     std::string filename (argv[1]);
     TSP::Graph g(filename);
     TSP::Tree t = TSP::branchAndBound(g);
-    std::cout << "Cost: " << t.getTourCost(g) << std::endl;
-    std::cout << t.toTsplibString() << std::endl;
+    if(argc == 3){
+        std::string filename (argv[2]);
+        writeStringToFile(filename, t.toTsplibString());
+    } else {
+        std::cout << t.toTsplibString() << std::endl;
+    }
     return 0;
 }
 
