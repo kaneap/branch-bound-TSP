@@ -2,29 +2,22 @@
 
 namespace TSP
 {
-    Tree::Tree()
-    {
-        _numVertices = 0;
-    }
+    Tree::Tree(): _numVertices(0), _illegal(true){}
 
     Tree::Tree(const Graph & graph): 
             Tree(graph, RFList(graph.getNumVertices())){}
 
-    Tree::Tree(const Graph & graph, std::vector<int> lambda){
-        RFList rf(graph.getNumVertices());
-        Tree(graph, lambda, rf);
-    }
+    Tree::Tree(const Graph & graph, std::vector<int> lambda): 
+            Tree(graph, lambda, RFList(graph.getNumVertices())){}
 
-    Tree::Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf){
-        Graph modified(graph, lambda);
-        Tree(modified, rf);
-    }
-
+    Tree::Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf):
+            Tree(Graph(graph, lambda), rf){}
 
     //construct a new 1 tree with costs c_λ ({i, j}) := c({i, j}) + λ(i) + λ(j)
     Tree::Tree(const Graph & graph, const RFList & rf):
     _edges(),
-    _vertexDegrees(graph.getNumVertices())
+    _vertexDegrees(graph.getNumVertices()),
+    _illegal(false)
     {
         //DONE: require and forbid edges
         //DONE in main: use modified weights via lambda
@@ -43,29 +36,32 @@ namespace TSP
             vertexSets.push_back(Union::makeSet(i));
         }
         auto allEdges = graph.getEdges(rf);
+        std::vector<WeightedEdge> oneEdges;
 
         unsigned count = 0;
         for (auto & e : allEdges)
         {
-            if (count < graph.getNumVertices()-1){
-                NodeId u = e.a();
-                NodeId v = e.b();
-                if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
-                    if (u == one || v == one) continue;
-                    if(e.getWeight() == std::numeric_limits<int>::max()){
-                        throw std::runtime_error("Forbidden edge in tree");
-                    }
-                    //make new weighted edge so we evalutate wrt the original edge weights
-                    edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
-                    Union::makeUnion(vertexSets[u], vertexSets[v]);
-                    count++;
-                    
+            if (count >= graph.getNumVertices()-1) break;
+            NodeId u = e.a();
+            NodeId v = e.b();
+            if(Union::findSet(vertexSets[u])->value != Union::findSet(vertexSets[v])->value){
+                if (u == one || v == one){
+                    oneEdges.push_back(e);
+                    continue;
                 }
+                if(e.getWeight() == std::numeric_limits<int>::max()){
+                    _illegal = true;
+                }
+                //make new weighted edge so we evalutate wrt the original edge weights
+                edges.push_back(WeightedEdge(u, v, graph.getEdgeWeight(u, v)));
+                Union::makeUnion(vertexSets[u], vertexSets[v]);
+                count++;
+                
             }
+            
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
-        auto oneEdges = graph.getConnectedEdges(one);
         std::sort(oneEdges.begin(), oneEdges.end(),
                 [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
             return lhs.getWeight() < rhs.getWeight();
@@ -106,6 +102,7 @@ namespace TSP
     }
 
     std::vector<NodeId> Tree::getTour(){
+        if(isIllegal()) throw std::runtime_error("Attempted to get the tour of an llegal tree");
         if(!is2Regular()) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
         std::vector<std::vector<NodeId>> connections(this->_numVertices); 
         std::vector<NodeId> tour;
@@ -128,8 +125,6 @@ namespace TSP
     }
 
     std::string Tree::toTsplibString(){
-        if(!is2Regular()) throw std::runtime_error("Attemted to get tour string of a 1-tree which isn't 2-regular");
-
         std::stringstream ss;
         int numEdges = this->_edges.size();
         ss << "TYPE : TOUR" << std::endl;
@@ -147,12 +142,17 @@ namespace TSP
         return _vertexDegrees[v];
     }
 
-    int Tree::getTourCost() const
-    {
-        //if (!is2Regular()) return -1; //TODO: return exeption?? Or just invalid value?
+
+    /**
+     * @brief 
+     * 
+     * @param graph the graph with the cost that we evaluate the costs with
+     * @return int cost of the 1 tree w.r.t. the given graph
+     */
+    int Tree::getTourCost(const Graph & graph) const {
         int sum = 0;
         for(WeightedEdge e : _edges){
-            sum += e.getWeight();
+            sum += graph.getEdgeWeight(e.a(), e.b());
         }
         return sum;
     }
@@ -168,5 +168,10 @@ namespace TSP
     size_t Tree::getNumVertices() const
     {
         return _numVertices;
+    }
+
+    bool Tree::isIllegal() const
+    {
+        return _illegal;
     }
 }

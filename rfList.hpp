@@ -20,6 +20,7 @@ namespace TSP {
         void forbid(Edge e);
         bool isRequired(Edge e) const;
         bool isForbidden(Edge e) const;
+        bool is2Regular() const;
     };
 }
 
