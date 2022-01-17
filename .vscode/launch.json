@@ -4,7 +4,6 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-<<<<<<< HEAD
         {
             "name": "(gdb) Launch",
             "type": "cppdbg",
@@ -25,15 +24,13 @@
             ]
         },
 
-=======
->>>>>>> b51c1ce13ea44f1475a9239a3a43c6643a9e32b9
 
         {
             "name": "g++ - Build and debug",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}\\main.exe",
-            "args": ["C:\\Users\\fabiu\\Documents\\TSP\\branch-bound-TSP\\Data\\star.tsp"],
+            "program": "${workspaceFolder}/main",
+            "args": ["./given_instances/berlin12.tsp"],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
@@ -46,8 +43,8 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "C/C++: g++ build",
-            "miDebuggerPath": "C:\\msys64\\mingw64\\bin\\gdb.exe"
+            "preLaunchTask": "my build",
+            "miDebuggerPath": "/usr/bin/gdb"
         }
     ]
 }

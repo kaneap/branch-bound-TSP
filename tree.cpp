@@ -62,13 +62,9 @@ namespace TSP
         }
 
         //second, we connect the two cheapest edges connected to the 1 vertex to the tree
-        std::sort(oneEdges.begin(), oneEdges.end(),
-                [] (const WeightedEdge& lhs, const WeightedEdge& rhs) {
-            return lhs.getWeight() < rhs.getWeight();
-        });
         WeightedEdge first = oneEdges[0];
         WeightedEdge second = oneEdges[1];
-        for(unsigned i = 2; i < oneEdges.size(); i++){
+        for(unsigned int i = 2; i < oneEdges.size(); i++){
             WeightedEdge current = oneEdges[i];
             if (current.getWeight() < first.getWeight())
             {

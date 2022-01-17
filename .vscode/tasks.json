@@ -3,23 +3,23 @@
         {
             "type": "shell",
             "label": "g++ build active file",
-            "command": "${workspaceFolder}\\compile.sh",
+            "command": "${workspaceFolder}/compile.sh",
             "options": {
-                "cwd": "\\usr\\bin"
+                "cwd": "/usr/bin"
             },
             "problemMatcher": [],
             "group": "build"
         },
         {
             "type": "cppbuild",
-            "label": "C/C++: g++ build",
-            "command": "C:\\msys64\\mingw64\\bin\\g++.exe",
+            "label": "my build",
+            "command": "/usr/bin/g++",
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${fileDirname}\\*.cpp",
+                "${fileDirname}/*.cpp",
                 "-o",
-                "${fileDirname}\\main",
+                "${fileDirname}/main",
                 "-pedantic", "-Wall", "-Wextra", "-Werror"
             ],
             "options": {

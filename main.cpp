@@ -175,7 +175,7 @@ namespace TSP{
             }else{
                 //there needs to be a vertex 2 ≤ i ≤ n with degree > 2.
                 std::vector<NodeId> candidates;
-                //TODO: should looking for this vetex be randomized perhaps?
+
                 for(NodeId v = 0; v < numVertices; v++){
                     int degree = t.getDegree(v);
                     if (degree > 2){
@@ -193,7 +193,7 @@ namespace TSP{
                     }
                 }
 
-                if(bestCandidate = invalid_node_id) throw std::runtime_error("Something went wrong no candidate has feasible edges");
+                if(bestCandidate == invalid_node_id) throw std::runtime_error("Something went wrong no candidate has feasible edges");
 
 
                 auto connectedEdges = t.getConnectedEdges(bestCandidate);
