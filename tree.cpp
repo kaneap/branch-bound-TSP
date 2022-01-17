@@ -80,6 +80,10 @@ namespace TSP
             } 
         }
 
+        if(first.getWeight() == std::numeric_limits<int>::max() || second.getWeight() == std::numeric_limits<int>::max()){
+            _illegal = true;
+        }
+
         edges.push_back(WeightedEdge(first.a(), first.b(), graph.getEdgeWeight(first.a(), first.b())));
         edges.push_back(WeightedEdge(second.a(), second.b(), graph.getEdgeWeight(second.a(), second.b())));
         _edges = edges;

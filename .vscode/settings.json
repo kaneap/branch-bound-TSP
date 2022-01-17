@@ -46,6 +46,9 @@
         "streambuf": "cpp",
         "set": "cpp",
         "hash_map": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "ranges": "cpp"
     }
 }
