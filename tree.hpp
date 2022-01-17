@@ -19,19 +19,20 @@ namespace TSP {
         bool _illegal;
     public:
         Tree();
+        Tree(int numVertices);
         Tree(const Graph & graph);
         Tree(const Graph & graph, const RFList & rf);
         Tree(const Graph & graph, std::vector<int> lambda);
         Tree(const Graph & graph, std::vector<int> lambda, const RFList & rf);
         bool is2Regular() const;
-        std::vector<NodeId> getTour();
-        std::string toTsplibString();
+        std::vector<NodeId> getTour() const;
+        std::string toTsplibString() const;
         int getDegree(NodeId v) const;
-        int getTourCost() const;
         int getTourCost(const Graph & graph) const;
         size_t getNumVertices() const;
-        std::set<WeightedEdge> getConnectedEdges (NodeId v);
+        std::set<WeightedEdge> getConnectedEdges (NodeId v) const;
         bool isIllegal() const;
+        void makeTrivialTour(const Graph & graph);
     };
 }
 

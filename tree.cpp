@@ -101,7 +101,7 @@ namespace TSP
         return true;
     }
 
-    std::vector<NodeId> Tree::getTour(){
+    std::vector<NodeId> Tree::getTour() const {
         if(isIllegal()) throw std::runtime_error("Attempted to get the tour of an llegal tree");
         if(!is2Regular()) throw std::runtime_error("Attemted to get tour of a 1-tree which isn't 2-regular");
         std::vector<std::vector<NodeId>> connections(this->_numVertices); 
@@ -124,7 +124,7 @@ namespace TSP
         return tour;
     }
 
-    std::string Tree::toTsplibString(){
+    std::string Tree::toTsplibString() const {
         std::stringstream ss;
         int numEdges = this->_edges.size();
         ss << "TYPE : TOUR" << std::endl;
@@ -157,7 +157,7 @@ namespace TSP
         return sum;
     }
 
-    std::set<WeightedEdge> Tree::getConnectedEdges(NodeId v) {
+    std::set<WeightedEdge> Tree::getConnectedEdges(NodeId v) const {
         std::set<WeightedEdge> connected;
         for(WeightedEdge e : _edges){
             if(e.connectsVertex(v)) connected.insert(e);
@@ -173,5 +173,15 @@ namespace TSP
     bool Tree::isIllegal() const
     {
         return _illegal;
+    }
+
+    void Tree::makeTrivialTour(const Graph & Graph){
+        _illegal = false;
+        _numVertices = Graph.getNumVertices();
+        _vertexDegrees = std::vector<int>(_numVertices, 2);
+        size_t numVertices = Graph.getNumVertices();
+        for(unsigned int i = 0; i < _numVertices; i++){
+            _edges.push_back(WeightedEdge(i, (i+1)%numVertices, Graph.getEdgeWeight(i, (i+1)%numVertices)));
+        }
     }
 }

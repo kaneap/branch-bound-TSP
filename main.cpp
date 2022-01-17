@@ -144,17 +144,14 @@ namespace TSP{
         int rootCost = getCost(rootTree, lambda, graph);
         Q.push(RFList(numVertices), rootCost, lambda);
 
-        int upperLimit = std::numeric_limits<int>::max();
-        //TODO: this is a tour of nothing, might need to make a special case for this
         Tree shortestTour;
+        shortestTour.makeTrivialTour(graph);
+        int upperLimit = shortestTour.getTourCost(graph);
         float t_0 = std::accumulate(lambda.begin(),lambda.end(),0) / (2.0 * lambda.size());
-        int count = 0;
+        unsigned int max_q = 1;
         //When Q is empty, we have a solution.
         while(Q.size() > 0){
-            if(count % 1 == 0){
-                std::cout << "Q size: " << Q.size() << std::endl;
-            }
-            count++;
+            max_q = max_q < Q.size() ? Q.size() : max_q;
             auto elem = Q.pop();
             auto rf = elem.getRF();
 
@@ -267,7 +264,7 @@ namespace TSP{
                 }        
             }
         }
-        if(upperLimit == std::numeric_limits<int>::max()) throw std::runtime_error("No tour found");
+        std::cout << "Max Q: " << max_q << std::endl;
         return shortestTour;
     }
 }

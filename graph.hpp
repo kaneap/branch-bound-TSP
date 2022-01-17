@@ -76,7 +76,7 @@ namespace TSP {
       std::vector<WeightedEdge> getEdges (const RFList & rf) const;
       std::vector<WeightedEdge> getConnectedEdges(NodeId v) const;
       std::vector<std::vector<int>> updatedEdgeCosts(std::vector<int> lambda) const ;
-
+      unsigned int getUpperBound() const;
    private:
       std::vector<std::vector<int>> _edges;
       size_type _numVertices;
